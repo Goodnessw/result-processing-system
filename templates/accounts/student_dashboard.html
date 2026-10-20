@@ -1,0 +1,332 @@
+{% extends "accounts/base.html" %}
+
+{% block title %}Student Dashboard{% endblock %}
+{% block page_title %}Student Dashboard{% endblock %}
+
+{% block content %}
+<style>
+    .student-shell { color: #172033; }
+    .student-hero {
+        background: linear-gradient(135deg, #ecfdf5 0%, #f8fafc 45%, #eef6ff 100%);
+        border: 1px solid #dff3ea;
+        border-radius: 22px;
+        padding: 26px 28px;
+    }
+    .student-badge {
+        display: inline-block;
+        background: #dcfce7;
+        color: #166534;
+        font-size: 11px;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        padding: 7px 10px;
+        border-radius: 999px;
+        font-weight: 750;
+        margin-bottom: 12px;
+    }
+    .student-hero h1 {
+        margin: 0 0 8px;
+        font-size: 32px;
+        letter-spacing: -.8px;
+    }
+    .student-hero p {
+        margin: 0;
+        color: #475569;
+        line-height: 1.7;
+    }
+    .student-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        margin-top: 24px;
+    }
+    .student-card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 20px;
+    }
+    .student-card .icon {
+        width: 44px;
+        height: 44px;
+        display: grid;
+        place-items: center;
+        border-radius: 12px;
+        background: #ecfdf5;
+        color: #15803d;
+        font-size: 20px;
+        margin-bottom: 18px;
+    }
+    .student-card h3 {
+        margin: 0 0 10px;
+        font-size: 15px;
+    }
+    .student-card .stat {
+        font-size: 32px;
+        font-weight: 800;
+        letter-spacing: -.06em;
+        margin: 0;
+    }
+    .student-card p {
+        margin: 6px 0 0;
+        color: #64748b;
+        line-height: 1.7;
+        font-size: 12px;
+    }
+    .student-actions {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        margin-top: 24px;
+    }
+    .action-link {
+        display: block;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 20px;
+        text-decoration: none;
+        color: inherit;
+    }
+    .action-link .icon {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        border-radius: 12px;
+        background: #eff6ff;
+        color: #2563eb;
+        margin-bottom: 12px;
+    }
+    .action-link h3 {
+        margin: 0 0 8px;
+        font-size: 16px;
+    }
+    .action-link p {
+        margin: 0;
+        color: #64748b;
+        line-height: 1.7;
+        font-size: 12px;
+    }
+    .profile-panel {
+        margin-top: 24px;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 20px;
+    }
+    .profile-panel h3 {
+        margin: 0 0 12px;
+    }
+    .profile-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px 20px;
+    }
+    .profile-grid div {
+        font-size: 13px;
+        color: #475569;
+        line-height: 1.7;
+    }
+    .student-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+    }
+    .student-table th, .student-table td {
+        text-align: left;
+        padding: 12px 8px;
+        border-bottom: 1px solid #edf2f7;
+        font-size: 13px;
+    }
+    .student-table th {
+        color: #64748b;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+    }
+    @media (max-width: 900px) {
+        .student-grid, .student-actions, .profile-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+    @media (max-width: 700px) {
+        .student-grid, .student-actions, .profile-grid {
+            grid-template-columns: 1fr;
+        }
+        .student-hero { padding: 22px 20px; }
+        .student-hero h1 { font-size: 26px; }
+    }
+</style>
+
+<div class="student-shell">
+    <div class="student-hero">
+        <div class="student-badge">Student portal</div>
+        <h1>Welcome back, {{ request.user.first_name|default:request.user.username }}</h1>
+        <p>Your academic workspace keeps your registered courses, approved results, and complaint history in one place.</p>
+    </div>
+
+    <div class="student-grid">
+        <div class="student-card">
+            <div class="icon"><i class="fa-solid fa-book-open-reader"></i></div>
+            <h3>My Courses</h3>
+            <p class="stat">{{ registered_courses|default:0 }}</p>
+            <p>Currently registered courses</p>
+        </div>
+
+        <div class="student-card">
+            <div class="icon"><i class="fa-solid fa-file-lines"></i></div>
+            <h3>Approved Results</h3>
+            <p class="stat">{{ results_count|default:0 }}</p>
+            <p>Results available to view</p>
+        </div>
+
+        <div class="student-card">
+            <div class="icon"><i class="fa-solid fa-graduation-cap"></i></div>
+            <h3>Current Level</h3>
+            {% if student %}
+                <p class="stat">{{ student.get_current_level_display }}</p>
+                <p>{{ student.programme.name }}</p>
+            {% else %}
+                <p class="stat">—</p>
+                <p>Profile not set up yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="section-heading">Quick actions</div>
+    <div class="student-actions">
+        <a href="{% url 'student_course_registration' %}" class="action-link">
+            <div class="icon"><i class="fa-solid fa-clipboard-list"></i></div>
+            <h3>Course registration</h3>
+            <p>Register for courses for your selected session and semester.</p>
+        </a>
+
+        <a href="{% url 'complaint_submit' %}" class="action-link">
+            <div class="icon"><i class="fa-solid fa-circle-exclamation"></i></div>
+            <h3>Submit complaint</h3>
+            <p>Report an issue with one of your results.</p>
+        </a>
+
+        <a href="{% url 'complaint_history' %}" class="action-link">
+            <div class="icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+            <h3>Complaint history</h3>
+            <p>{{ complaints_count|default:0 }} complaint{{ complaints_count|pluralize }} recorded.</p>
+        </a>
+
+        <div class="action-link" style="cursor: default;">
+            <div class="icon"><i class="fa-solid fa-shield-check"></i></div>
+            <h3>Result status</h3>
+            <p>Only approved results appear in your academic dashboard.</p>
+        </div>
+    </div>
+
+    {% if student %}
+    <div class="section-heading">Academic information</div>
+    <div class="profile-panel">
+        <h3>Student profile</h3>
+        <div class="profile-grid">
+            <div><strong>Name:</strong> {{ request.user.get_full_name|default:request.user.username }}</div>
+            <div><strong>Matric number:</strong> {{ request.user.matric_number|default:"Not provided" }}</div>
+            <div><strong>Programme:</strong> {{ student.programme.name }}</div>
+            <div><strong>Department:</strong> {{ student.programme.department.name }}</div>
+            <div><strong>Study status:</strong> {{ student.get_status_display }}</div>
+            <div><strong>Admission session:</strong> {{ student.admission_session.name|default:"Not set" }}</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="section-heading">Course registration</div>
+    {% if registered_courses_list %}
+        <div class="profile-panel">
+            <table class="student-table">
+                <thead>
+                    <tr>
+                        <th>Course code</th>
+                        <th>Course title</th>
+                        <th>Session</th>
+                        <th>Semester</th>
+                        <th>Level</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reg in registered_courses_list %}
+                    <tr>
+                        <td>{{ reg.course.code }}</td>
+                        <td>{{ reg.course.title }}</td>
+                        <td>{{ reg.course.semester.session.name }}</td>
+                        <td>{{ reg.course.semester.get_name_display }}</td>
+                        <td>{{ reg.course.get_level_display }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="profile-panel">
+            <p style="margin:0; color:#64748b;">No course registrations are available yet for this student.</p>
+        </div>
+    {% endif %}
+
+    <div class="section-heading">Recent approved results</div>
+    <div class="profile-panel">
+        {% if approved_results %}
+            <table class="student-table">
+                <thead>
+                    <tr>
+                        <th>Course</th>
+                        <th>Score</th>
+                        <th>Grade</th>
+                        <th>Remark</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in approved_results %}
+                    <tr>
+                        <td>{{ result.course_registration.course.code }} — {{ result.course_registration.course.title }}</td>
+                        <td>{{ result.total_score }}</td>
+                        <td>{{ result.grade }}</td>
+                        <td>{{ result.remark }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p style="margin:0; color:#64748b;">No approved results are available yet for this student.</p>
+        {% endif %}
+    </div>
+
+    <div class="section-heading">Available courses</div>
+    {% if available_courses %}
+        <div class="profile-panel">
+            <h3>Available to register</h3>
+            <table class="student-table">
+                <thead>
+                    <tr>
+                        <th>Course code</th>
+                        <th>Course title</th>
+                        <th>Session</th>
+                        <th>Semester</th>
+                        <th>Level</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for course in available_courses %}
+                    <tr>
+                        <td>{{ course.code }}</td>
+                        <td>{{ course.title }}</td>
+                        <td>{{ course.semester.session.name }}</td>
+                        <td>{{ course.semester.get_name_display }}</td>
+                        <td>{{ course.get_level_display }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="profile-panel">
+            <p style="margin:0; color:#64748b;">No courses are currently available to register for this student in the active session/semester.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

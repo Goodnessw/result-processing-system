@@ -1,0 +1,503 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f6f8fc">
+    <title>Sign in | Result Processing System</title>
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+    <style>
+        :root {
+            --primary: #3157d5;
+            --primary-dark: #2445b5;
+            --text: #172033;
+            --muted: #778197;
+            --border: #e4e8f0;
+            --background: #f6f8fc;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Inter, -apple-system, BlinkMacSystemFont,
+                "Segoe UI", sans-serif;
+            color: var(--text);
+            background: var(--background);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 28px;
+        }
+
+        .page {
+            width: 100%;
+            max-width: 1020px;
+            min-height: 610px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background: #fff;
+            border: 1px solid #e9edf5;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 24px 80px rgba(28, 43, 83, .09);
+            animation: appear .45s ease-out;
+        }
+
+        .visual {
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 44px;
+            color: #fff;
+            background:
+                radial-gradient(ellipse at 15% 85%, rgba(89, 126, 255, .4), transparent 42%),
+                radial-gradient(ellipse at 100% 0%, rgba(112, 148, 255, .25), transparent 40%),
+                linear-gradient(145deg, #182c69, #2749ad 60%, #3157d5);
+        }
+
+        .visual::before,
+        .visual::after {
+            content: "";
+            position: absolute;
+            border: 1px solid rgba(255, 255, 255, .12);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .visual::before {
+            width: 390px;
+            height: 390px;
+            right: -170px;
+            top: 100px;
+        }
+
+        .visual::after {
+            width: 280px;
+            height: 280px;
+            right: -115px;
+            top: 155px;
+        }
+
+        .brand {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 12px;
+            font-size: 14px;
+            font-weight: 750;
+            line-height: 1.5;
+            margin-top: 10px;
+        }
+
+        .brand-logo {
+            width: 49px;
+            max-width: 100%;
+            height: auto;
+            display: block;
+            object-fit: contain;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.12));
+            flex-shrink: 0;
+        }
+
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2px;
+            text-align: left;
+        }
+
+        .brand-text strong {
+            font-size: 23px;
+            letter-spacing: 0.08em;
+            color: #ffffff;
+            line-height: 1;
+            font-weight: 900;
+        }
+
+        .brand-text span {
+            font-size: 8px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.82);
+            font-weight: 800;
+            line-height: 1.4;
+        }
+
+        .hero {
+            position: relative;
+            z-index: 1;
+            margin: auto 0;
+            padding: 60px 0;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 30px;
+            background: rgba(255, 255, 255, .1);
+            border: 1px solid rgba(255, 255, 255, .17);
+            color: #e0e8ff;
+            font-size: 11px;
+            font-weight: 650;
+            letter-spacing: .3px;
+        }
+
+        .eyebrow span {
+            width: 6px;
+            height: 6px;
+            background: #91f0bb;
+            border-radius: 50%;
+        }
+
+        .hero h1 {
+            max-width: 390px;
+            margin: 24px 0 17px;
+            font-size: clamp(30px, 3.4vw, 43px);
+            line-height: 1.15;
+            letter-spacing: -1.6px;
+            font-weight: 750;
+        }
+
+        .hero p {
+            max-width: 340px;
+            margin: 0;
+            color: #d5defa;
+            font-size: 14px;
+            line-height: 1.9;
+        }
+
+        .visual-footer {
+            position: relative;
+            z-index: 1;
+            color: #c9d5fb;
+            font-size: 11px;
+        }
+
+        .form-side {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 48px;
+        }
+
+        .form-content { width: 100%; max-width: 350px; }
+
+        .mobile-brand {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 38px;
+            font-weight: 750;
+            font-size: 13px;
+            margin-top: 6px;
+        }
+
+        .mobile-brand .brand-logo {
+            width: 170px;
+        }
+
+        .form-heading { margin-bottom: 30px; }
+
+        .form-heading h2 {
+            margin: 0 0 10px;
+            font-size: 28px;
+            letter-spacing: -1px;
+        }
+
+        .form-heading p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .field { margin-bottom: 21px; }
+
+        .field label {
+            display: block;
+            margin-bottom: 9px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #313b50;
+        }
+
+        .input-wrap { position: relative; }
+
+        .input-icon {
+            position: absolute;
+            top: 50%;
+            left: 14px;
+            transform: translateY(-50%);
+            color: #929bb0;
+            font-size: 17px;
+            pointer-events: none;
+        }
+
+        .field input {
+            width: 100%;
+            height: 49px;
+            padding: 0 14px 0 43px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            outline: none;
+            background: #fff;
+            color: var(--text);
+            font: inherit;
+            font-size: 13px;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        .field input::placeholder { color: #a3aabd; }
+
+        .field input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(49, 87, 213, .1);
+        }
+
+        .password-toggle {
+            position: absolute;
+            top: 50%;
+            right: 12px;
+            transform: translateY(-50%);
+            border: 0;
+            background: transparent;
+            color: #69758c;
+            cursor: pointer;
+            padding: 6px;
+            font-size: 11px;
+            font-weight: 650;
+        }
+
+        .field input[type="password"] { padding-right: 57px; }
+
+        .error {
+            padding: 12px 14px;
+            margin-bottom: 22px;
+            border: 1px solid #f3cece;
+            border-radius: 10px;
+            background: #fff5f5;
+            color: #b4232f;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .submit {
+            width: 100%;
+            height: 49px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            border: 0;
+            border-radius: 10px;
+            background: var(--primary);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 5px 12px rgba(49, 87, 213, .17);
+            transition: background .2s, transform .2s;
+        }
+
+        .submit:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .submit:focus-visible,
+        .password-toggle:focus-visible {
+            outline: 3px solid #9aafff;
+            outline-offset: 3px;
+        }
+
+        .secure-note {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            margin-top: 22px;
+            color: #8a94a8;
+            font-size: 11px;
+        }
+
+        .bottom-note {
+            margin-top: 35px;
+            padding-top: 20px;
+            border-top: 1px solid #edf0f5;
+            text-align: center;
+            color: #929bad;
+            font-size: 11px;
+            line-height: 1.8;
+        }
+
+        @keyframes appear {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 760px) {
+            body { padding: 16px; }
+            .page {
+                max-width: 470px;
+                min-height: auto;
+                grid-template-columns: 1fr;
+                border-radius: 20px;
+            }
+            .visual { display: none; }
+            .form-side { padding: 38px 28px; }
+            .mobile-brand { display: flex; }
+            .form-heading h2 { font-size: 26px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: .01ms !important;
+                transition-duration: .01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <section class="visual" aria-label="Portal introduction">
+            <div class="brand">
+                <img class="brand-logo" src="{% static 'images/unicross-logo.png' %}" alt="UNICROSS logo">
+                <div class="brand-text">
+                    <strong>UNICROSS</strong>
+                    <span>University of Cross River State</span>
+                </div>
+            </div>
+
+            <div class="hero">
+                <div class="eyebrow"><span></span> ACADEMIC MANAGEMENT PORTAL</div>
+                <h1>Every result.<br>Handled with<br>confidence.</h1>
+                <p>
+                    A central workspace for academic records, assessment
+                    processing and result management.
+                </p>
+            </div>
+
+            <div class="visual-footer">
+                Secure access for students, lecturers and academic administrators.
+            </div>
+        </section>
+
+        <section class="form-side">
+            <div class="form-content">
+                <div class="mobile-brand">
+                    <img class="brand-logo" src="{% static 'images/unicross-logo.png' %}" alt="UNICROSS logo">
+                    <div class="brand-text">
+                        <strong>UNICROSS</strong>
+                        <span>University of Cross River State</span>
+                    </div>
+                </div>
+
+                <div class="form-heading">
+                    <h2>Welcome back</h2>
+                    <p>Sign in with your account details to continue.</p>
+                </div>
+
+                {% if form.errors %}
+                    <div class="error" role="alert">
+                        Your username or password is incorrect.
+                        Please check your details and try again.
+                    </div>
+                {% endif %}
+
+                {% if next and user.is_authenticated %}
+                    <div class="error" role="alert">
+                        Your account cannot access that page.
+                        Please sign in with an authorised account.
+                    </div>
+                {% endif %}
+
+                <form method="post" action="{% url 'login' %}">
+                    {% csrf_token %}
+
+                    <div class="field">
+                        <label for="id_username">Username</label>
+                        <div class="input-wrap">
+                            <span class="input-icon" aria-hidden="true">♙</span>
+                            <input
+                                type="text"
+                                name="username"
+                                id="id_username"
+                                placeholder="Enter your username"
+                                value="{{ form.username.value|default:'' }}"
+                                autocomplete="username"
+                                autofocus
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label for="id_password">Password</label>
+                        <div class="input-wrap">
+                            <span class="input-icon" aria-hidden="true">⌑</span>
+                            <input
+                                type="password"
+                                name="password"
+                                id="id_password"
+                                placeholder="Enter your password"
+                                autocomplete="current-password"
+                                required
+                            >
+                            <button
+                                class="password-toggle"
+                                type="button"
+                                id="togglePassword"
+                                aria-controls="id_password"
+                                aria-label="Show password"
+                            >Show</button>
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="next" value="{{ next }}">
+
+                    <button class="submit" type="submit">
+                        Sign in <span aria-hidden="true">→</span>
+                    </button>
+                </form>
+
+                <div class="secure-note">
+                    <span aria-hidden="true">▣</span>
+                    Your session is protected by secure authentication.
+                </div>
+
+                <div class="bottom-note">
+                    UNICROSS<br>
+                    University of Cross River State<br>
+                    For authorised users only.
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const passwordInput = document.getElementById("id_password");
+        const toggleButton = document.getElementById("togglePassword");
+
+        toggleButton.addEventListener("click", () => {
+            const showing = passwordInput.type === "text";
+            passwordInput.type = showing ? "password" : "text";
+            toggleButton.textContent = showing ? "Show" : "Hide";
+            toggleButton.setAttribute(
+                "aria-label",
+                showing ? "Show password" : "Hide password"
+            );
+        });
+    </script>
+</body>
+</html>

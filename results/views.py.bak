@@ -1,0 +1,389 @@
+from decimal import Decimal, InvalidOperation
+
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.http import HttpResponseForbidden
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+
+from accounts.models import User
+from academics.models import Course, CourseRegistration
+from .models import Result, ResultAuditLog
+
+
+@login_required
+def review_results(request):
+    if request.user.role != User.Role.EXAM_OFFICER:
+        return HttpResponseForbidden(
+            "Only examination officers can review submitted results."
+        )
+
+    submitted_results = Result.objects.filter(
+        status=Result.Status.SUBMITTED,
+    ).select_related(
+        "course_registration__course",
+        "course_registration__student__user",
+    ).order_by(
+        "course_registration__course__code",
+        "course_registration__student__user__last_name",
+        "course_registration__student__user__first_name",
+    )
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+        result_id = request.POST.get("result_id")
+
+        if action not in ("approve", "reject"):
+            messages.error(request, "Invalid action.")
+            return redirect("review_results")
+
+        if not result_id:
+            messages.error(request, "No result selected.")
+            return redirect("review_results")
+
+        try:
+            result_id = int(result_id)
+        except (TypeError, ValueError):
+            messages.error(request, "Invalid result selected.")
+            return redirect("review_results")
+
+        try:
+            with transaction.atomic():
+                result = (
+                    Result.objects.select_for_update()
+                    .select_related(
+                        "course_registration__course",
+                        "course_registration__student__user",
+                    )
+                    .get(
+                        pk=result_id,
+                        status=Result.Status.SUBMITTED,
+                    )
+                )
+
+                if action == "approve":
+                    result.status = Result.Status.APPROVED
+                    result.approved_by = request.user
+                    result.full_clean()
+                    result.save()
+                    ResultAuditLog.objects.create(
+                        result=result,
+                        action=ResultAuditLog.Action.APPROVED,
+                        performed_by=request.user,
+                        details=(
+                            f"Approved by {request.user.get_full_name() or request.user.username}."
+                        ),
+                    )
+                    messages.success(
+                        request,
+                        f"Result for {result.course_registration.student.user.get_full_name() or result.course_registration.student.user.username} was approved.",
+                    )
+                else:
+                    reason = (request.POST.get("reason") or "").strip()
+                    if not reason:
+                        messages.error(
+                            request,
+                            "A rejection reason is required before rejecting a result.",
+                        )
+                        return redirect("review_results")
+
+                    result.status = Result.Status.REJECTED
+                    result.approved_by = None
+                    result.full_clean()
+                    result.save()
+                    ResultAuditLog.objects.create(
+                        result=result,
+                        action=ResultAuditLog.Action.REJECTED,
+                        performed_by=request.user,
+                        details=reason,
+                    )
+                    messages.success(
+                        request,
+                        f"Result for {result.course_registration.student.user.get_full_name() or result.course_registration.student.user.username} was rejected.",
+                    )
+
+            return redirect("review_results")
+
+        except Result.DoesNotExist:
+            messages.error(
+                request,
+                "This result is no longer pending review.",
+            )
+            return redirect("review_results")
+        except ValidationError as exc:
+            messages.error(request, f"Could not update result: {exc}")
+            return redirect("review_results")
+
+    return render(
+        request,
+        "results/review_results.html",
+        {
+            "results": submitted_results,
+            "pending_count": submitted_results.count(),
+            "dashboard_url": reverse("dashboard"),
+        },
+    )
+
+
+@login_required
+def course_results(request, course_id):
+    if request.user.role != User.Role.LECTURER:
+        return HttpResponseForbidden(
+            "Only lecturers can access course result entry."
+        )
+
+    course = get_object_or_404(
+        Course,
+        pk=course_id,
+        lecturer=request.user,
+        is_active=True,
+    )
+
+    registrations = list(
+        CourseRegistration.objects.filter(
+            course=course,
+            status=CourseRegistration.RegistrationStatus.REGISTERED,
+        )
+        .select_related("student__user")
+        .order_by("student__user__last_name", "student__user__first_name")
+    )
+
+    results_by_registration = {
+        result.course_registration_id: result
+        for result in Result.objects.filter(
+            course_registration__in=registrations
+        )
+    }
+
+    form_values = {}
+    errors = []
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        if action not in ("save", "submit", "clear"):
+            messages.error(request, "Invalid action.")
+            return redirect("course_results", course_id=course.id)
+
+        if action == "clear":
+            drafts = Result.objects.filter(
+                course_registration__in=registrations,
+                status=Result.Status.DRAFT,
+            )
+            with transaction.atomic():
+                for draft in drafts.select_related("course_registration"):
+                    ResultAuditLog.objects.create(
+                        result=draft,
+                        action=ResultAuditLog.Action.CLEARED,
+                        performed_by=request.user,
+                        details="Draft cleared by lecturer.",
+                    )
+                count = drafts.count()
+                drafts.delete()
+            messages.success(request, f"{count} draft result(s) cleared.")
+            return redirect("course_results", course_id=course.id)
+
+        if action == "save":
+            with transaction.atomic():
+                for registration in registrations:
+                    result = results_by_registration.get(registration.id)
+
+                    if result and result.status in (
+                        Result.Status.SUBMITTED,
+                        Result.Status.APPROVED,
+                    ):
+                        continue
+
+                    ca_raw = request.POST.get(
+                        f"ca_{registration.id}", ""
+                    ).strip()
+                    exam_raw = request.POST.get(
+                        f"exam_{registration.id}", ""
+                    ).strip()
+
+                    form_values[registration.id] = {
+                        "ca_value": ca_raw,
+                        "exam_value": exam_raw,
+                    }
+
+                    if not ca_raw and not exam_raw:
+                        continue
+
+                    if not ca_raw or not exam_raw:
+                        errors.append(
+                            f"{registration.student}: enter both CA and exam scores."
+                        )
+                        continue
+
+                    try:
+                        ca_score = Decimal(ca_raw)
+                        exam_score = Decimal(exam_raw)
+                    except InvalidOperation:
+                        errors.append(
+                            f"{registration.student}: enter valid numeric scores."
+                        )
+                        continue
+
+                    if not ca_score.is_finite() or not exam_score.is_finite():
+                        errors.append(
+                            f"{registration.student}: scores must be valid numbers."
+                        )
+                        continue
+
+                    if not Decimal("0") <= ca_score <= Decimal("30"):
+                        errors.append(
+                            f"{registration.student}: CA must be between 0 and 30."
+                        )
+                        continue
+
+                    if not Decimal("0") <= exam_score <= Decimal("70"):
+                        errors.append(
+                            f"{registration.student}: exam must be between 0 and 70."
+                        )
+                        continue
+
+                    is_new = result is None
+
+                    if is_new:
+                        result = Result(
+                            course_registration=registration,
+                            entered_by=request.user,
+                        )
+                    else:
+                        result.entered_by = request.user
+
+                    result.ca_score = ca_score
+                    result.exam_score = exam_score
+                    result.status = Result.Status.DRAFT
+                    result.approved_by = None
+
+                    try:
+                        result.full_clean()
+                        result.save()
+                    except ValidationError as exc:
+                        errors.append(
+                            f"{registration.student}: {exc}"
+                        )
+                        continue
+
+                    ResultAuditLog.objects.create(
+                        result=result,
+                        action=(
+                            ResultAuditLog.Action.CREATED
+                            if is_new
+                            else ResultAuditLog.Action.UPDATED
+                        ),
+                        performed_by=request.user,
+                        details="Result saved as draft.",
+                    )
+
+            if errors:
+                for error in errors:
+                    messages.error(request, error)
+            else:
+                messages.success(request, "Draft results saved successfully.")
+                return redirect("course_results", course_id=course.id)
+
+        elif action == "submit":
+            if not registrations:
+                messages.error(
+                    request,
+                    "There are no registered students for this course.",
+                )
+            else:
+                missing = [
+                    registration
+                    for registration in registrations
+                    if registration.id not in results_by_registration
+                ]
+
+                if missing:
+                    messages.error(
+                        request,
+                        f"{len(missing)} registered student(s) still need results. "
+                        "Save results for every student before submitting.",
+                    )
+                else:
+                    with transaction.atomic():
+                        submission_errors = []
+
+                        for registration in registrations:
+                            result = results_by_registration[registration.id]
+
+                            if result.status in (
+                                Result.Status.SUBMITTED,
+                                Result.Status.APPROVED,
+                            ):
+                                continue
+
+                            result.status = Result.Status.SUBMITTED
+
+                            try:
+                                result.full_clean()
+                                result.save()
+                            except ValidationError as exc:
+                                submission_errors.append(
+                                    f"{registration.student}: {exc}"
+                                )
+                                continue
+
+                            ResultAuditLog.objects.create(
+                                result=result,
+                                action=ResultAuditLog.Action.SUBMITTED,
+                                performed_by=request.user,
+                                details="Lecturer submitted result for approval.",
+                            )
+
+                    if submission_errors:
+                        for error in submission_errors:
+                            messages.error(request, error)
+                    else:
+                        messages.success(
+                            request,
+                            "Results submitted for approval.",
+                        )
+                        return redirect(
+                            "course_results",
+                            course_id=course.id,
+                        )
+
+    rows = []
+    any_locked_result = False
+
+    for registration in registrations:
+        result = results_by_registration.get(registration.id)
+        posted_values = form_values.get(registration.id, {})
+
+        if result and result.status in (
+            Result.Status.SUBMITTED,
+            Result.Status.APPROVED,
+        ):
+            any_locked_result = True
+
+        rows.append({
+            "registration": registration,
+            "result": result,
+            "ca_value": posted_values.get(
+                "ca_value",
+                str(result.ca_score) if result else "",
+            ),
+            "exam_value": posted_values.get(
+                "exam_value",
+                str(result.exam_score) if result else "",
+            ),
+        })
+
+    return render(
+        request,
+        "results/course_results.html",
+        {
+            "course": course,
+            "rows": rows,
+            "total_students": len(registrations),
+            "result_count": len(results_by_registration),
+            "dashboard_url": reverse("dashboard"),
+            "submit_locked": any_locked_result,
+        },
+    )

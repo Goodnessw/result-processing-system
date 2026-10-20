@@ -1,0 +1,191 @@
+{% extends "accounts/base.html" %}
+{% block title %}Head of Department Dashboard{% endblock %}
+{% block page_title %}Department Dashboard{% endblock %}
+{% block content %}
+<style>
+    .hod-shell { color: #172033; }
+    .hod-hero {
+        background: linear-gradient(135deg, #fef3c7 0%, #fffaf0 42%, #f8fafc 100%);
+        border: 1px solid #f3dfaa;
+        border-radius: 22px;
+        padding: 26px 28px;
+    }
+    .hod-badge {
+        display: inline-block;
+        background: #fef3c7;
+        color: #a16207;
+        font-size: 11px;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        padding: 7px 10px;
+        border-radius: 999px;
+        font-weight: 750;
+        margin-bottom: 12px;
+    }
+    .hod-hero h1 {
+        margin: 0 0 8px;
+        font-size: 32px;
+        letter-spacing: -.8px;
+    }
+    .hod-hero p {
+        margin: 0;
+        color: #475569;
+        line-height: 1.7;
+    }
+    .hod-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+        margin-top: 24px;
+    }
+    .hod-card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 20px;
+    }
+    .hod-card .icon {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        background: #fff7ed;
+        color: #c2410c;
+        border-radius: 12px;
+        margin-bottom: 16px;
+    }
+    .hod-card h3 {
+        margin: 0 0 10px;
+        font-size: 15px;
+    }
+    .hod-card .stat {
+        font-size: 31px;
+        font-weight: 800;
+        margin: 0;
+        letter-spacing: -.06em;
+    }
+    .hod-card p {
+        margin: 6px 0 0;
+        color: #64748b;
+        font-size: 12px;
+        line-height: 1.7;
+    }
+    .hod-actions {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        margin-top: 24px;
+    }
+    .hod-action {
+        display: block;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 20px;
+        text-decoration: none;
+        color: inherit;
+    }
+    .hod-action .icon {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        background: #fff7ed;
+        color: #c2410c;
+        border-radius: 12px;
+        margin-bottom: 14px;
+    }
+    .hod-action h3 {
+        margin: 0 0 8px;
+        font-size: 16px;
+    }
+    .hod-action p {
+        margin: 0;
+        color: #64748b;
+        font-size: 12px;
+        line-height: 1.7;
+    }
+    .hod-notice {
+        margin-top: 22px;
+        background: #fffaf0;
+        border: 1px solid #f3dfaa;
+        border-radius: 16px;
+        padding: 18px 20px;
+        color: #7c5a12;
+        line-height: 1.7;
+        font-size: 13px;
+    }
+    @media (max-width: 900px) {
+        .hod-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .hod-actions { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 700px) {
+        .hod-grid { grid-template-columns: 1fr; }
+        .hod-hero { padding: 22px 20px; }
+        .hod-hero h1 { font-size: 26px; }
+    }
+</style>
+
+<div class="hod-shell">
+    <div class="hod-hero">
+        <div class="hod-badge">Department leadership</div>
+        <h1>Welcome back, {{ request.user.first_name|default:request.user.username }}</h1>
+        <p>Review verified results, confirm final academic decisions, and ensure departmental standards are upheld across all programmes.</p>
+    </div>
+
+    <div class="hod-grid">
+        <div class="hod-card">
+            <div class="icon"><i class="fa-solid fa-building-columns"></i></div>
+            <h3>Final approval queue</h3>
+            <p class="stat">{{ pending_results|default:0 }}</p>
+            <p>Awaiting HOD review</p>
+        </div>
+
+        <div class="hod-card">
+            <div class="icon"><i class="fa-solid fa-circle-check"></i></div>
+            <h3>Approved results</h3>
+            <p class="stat">{{ approved_results|default:0 }}</p>
+            <p>Published to students</p>
+        </div>
+
+        <div class="hod-card">
+            <div class="icon"><i class="fa-solid fa-xmark-circle"></i></div>
+            <h3>Rejected outcomes</h3>
+            <p class="stat">{{ rejected_results|default:0 }}</p>
+            <p>Returned for correction</p>
+        </div>
+
+        <div class="hod-card">
+            <div class="icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <h3>Open complaints</h3>
+            <p class="stat">{{ complaints_count|default:0 }}</p>
+            <p>Need departmental action</p>
+        </div>
+    </div>
+
+    <div class="section-heading">Department actions</div>
+    <div class="hod-actions">
+        <a href="{% url 'hod_review_results' %}?status=pending" class="hod-action">
+            <div class="icon"><i class="fa-solid fa-building-columns"></i></div>
+            <h3>Final approval queue</h3>
+            <p>Review verified results awaiting HOD approval and publication.</p>
+        </a>
+
+        <a href="{% url 'hod_review_results' %}?status=approved" class="hod-action">
+            <div class="icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+            <h3>Approved results</h3>
+            <p>Confirm final approved results already published to students.</p>
+        </a>
+
+        <a href="{% url 'complaint_queue' %}" class="hod-action">
+            <div class="icon"><i class="fa-solid fa-briefcase-medical"></i></div>
+            <h3>Complaint queue</h3>
+            <p>{{ complaints_count|default:0 }} complaint{{ complaints_count|pluralize }} awaiting your decision.</p>
+        </a>
+    </div>
+
+    <div class="hod-notice">
+        The HOD reviews examination-officer-verified results before final approval and student publication. Rejections return the result to the lecturer for correction and require a clear resolution path.
+    </div>
+</div>
+{% endblock %}

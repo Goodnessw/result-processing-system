@@ -1,0 +1,314 @@
+{% extends "accounts/base.html" %}
+
+{% block title %}Lecturer Dashboard{% endblock %}
+{% block page_title %}Lecturer Dashboard{% endblock %}
+
+{% block content %}
+<style>
+    .lecturer-page { color: #172033; }
+    .lecturer-hero {
+        background: linear-gradient(135deg, #eff6ff 0%, #ffffff 42%, #eef2ff 100%);
+        border: 1px solid #dfe9ff;
+        border-radius: 22px;
+        padding: 26px 28px;
+    }
+    .lecturer-badge {
+        display: inline-block;
+        background: #dbeafe;
+        color: #1d4ed8;
+        font-size: 11px;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        padding: 7px 10px;
+        border-radius: 999px;
+        font-weight: 750;
+        margin-bottom: 12px;
+    }
+    .lecturer-hero h1 {
+        margin: 0 0 8px;
+        font-size: 32px;
+        letter-spacing: -.8px;
+    }
+    .lecturer-hero p {
+        margin: 0;
+        color: #475569;
+        line-height: 1.7;
+    }
+    .lecturer-stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        margin-top: 24px;
+    }
+    .lecturer-stat {
+        padding: 20px;
+        border: 1px solid #e2e8f0;
+        background: #fff;
+        border-radius: 16px;
+    }
+    .lecturer-stat-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+    .lecturer-stat-icon {
+        width: 44px;
+        height: 44px;
+        display: grid;
+        place-items: center;
+        border-radius: 12px;
+        background: #eff6ff;
+        color: #2563eb;
+        font-size: 20px;
+    }
+    .lecturer-stat-label {
+        color: #64748b;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+    }
+    .lecturer-stat-number {
+        font-size: 32px;
+        font-weight: 800;
+        margin-top: 8px;
+        letter-spacing: -.06em;
+    }
+    .lecturer-stat-note {
+        color: #64748b;
+        font-size: 12px;
+        margin-top: 6px;
+    }
+    .section-divider {
+        margin: 30px 0 18px;
+        font-size: 15px;
+        font-weight: 750;
+    }
+    .lecturer-course-list {
+        display: grid;
+        gap: 14px;
+    }
+    .lecturer-course-card {
+        display: block;
+        padding: 20px;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        text-decoration: none;
+        color: inherit;
+    }
+    .lecturer-course-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    .lecturer-course-code {
+        display: inline-block;
+        background: #eff6ff;
+        color: #1d4ed8;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 6px 8px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+    }
+    .lecturer-course-name {
+        margin: 0 0 7px;
+        font-size: 18px;
+    }
+    .lecturer-course-programme {
+        color: #64748b;
+        font-size: 13px;
+    }
+    .lecturer-course-arrow {
+        color: #64748b;
+        font-size: 18px;
+    }
+    .lecturer-course-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 18px;
+    }
+    .lecturer-course-meta span {
+        font-size: 12px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 9px;
+        padding: 7px 10px;
+        color: #475569;
+    }
+    .lecturer-course-bottom {
+        margin-top: 16px;
+        padding-top: 14px;
+        border-top: 1px solid #edf2f7;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+    }
+    .lecturer-course-hint {
+        color: #64748b;
+        font-size: 12px;
+    }
+    .lecturer-manage-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #2563eb;
+        color: #fff !important;
+        padding: 10px 14px;
+        border-radius: 10px;
+        text-decoration: none !important;
+        font-size: 13px;
+        font-weight: 700;
+    }
+    .lecturer-empty {
+        text-align: center;
+        padding: 40px 20px;
+        background: white;
+        border: 1px dashed #cbd5e1;
+        border-radius: 16px;
+    }
+    .lecturer-empty h3 {
+        margin: 0 0 8px;
+    }
+    .lecturer-empty p {
+        margin: 0;
+        color: #64748b;
+        font-size: 13px;
+    }
+    .session-panel {
+        margin-top: 20px;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 18px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+    }
+    .session-label {
+        color: #64748b;
+        font-size: 11px;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+    }
+    .session-name {
+        font-size: 18px;
+        font-weight: 750;
+    }
+    .session-status {
+        color: #15803d;
+        font-size: 12px;
+        font-weight: 700;
+    }
+    @media (max-width: 700px) {
+        .lecturer-stats { grid-template-columns: 1fr; }
+        .lecturer-course-bottom { flex-direction: column; align-items: flex-start; }
+        .lecturer-manage-button { width: 100%; justify-content: center; }
+    }
+</style>
+
+<div class="lecturer-page">
+    <div class="lecturer-hero">
+        <div class="lecturer-badge">Lecturer workspace</div>
+        <h1>Welcome back, {{ request.user.first_name|default:request.user.username }}</h1>
+        <p>Manage your teaching load, submit result records, and monitor complaint follow-ups from your assigned courses.</p>
+    </div>
+
+    <div class="lecturer-stats">
+        <div class="lecturer-stat">
+            <div class="lecturer-stat-top">
+                <span class="lecturer-stat-icon"><i class="fa-solid fa-book"></i></span>
+            </div>
+            <div class="lecturer-stat-label">Assigned courses</div>
+            <div class="lecturer-stat-number">{{ total_courses }}</div>
+            <div class="lecturer-stat-note">Active courses assigned to you</div>
+        </div>
+
+        <div class="lecturer-stat">
+            <div class="lecturer-stat-top">
+                <span class="lecturer-stat-icon"><i class="fa-solid fa-pen-to-square"></i></span>
+            </div>
+            <div class="lecturer-stat-label">Draft results</div>
+            <div class="lecturer-stat-number">{{ pending_results }}</div>
+            <div class="lecturer-stat-note">Awaiting submission</div>
+        </div>
+
+        <div class="lecturer-stat">
+            <div class="lecturer-stat-top">
+                <span class="lecturer-stat-icon"><i class="fa-solid fa-paper-plane"></i></span>
+            </div>
+            <div class="lecturer-stat-label">Submitted results</div>
+            <div class="lecturer-stat-number">{{ submitted_results }}</div>
+            <div class="lecturer-stat-note">Pending review</div>
+        </div>
+    </div>
+
+    <div class="section-divider">Complaint oversight</div>
+    <div class="lecturer-stats">
+        <div class="lecturer-stat">
+            <div class="lecturer-stat-top">
+                <span class="lecturer-stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
+            </div>
+            <div class="lecturer-stat-label">Assigned complaints</div>
+            <div class="lecturer-stat-number">{{ complaints_count }}</div>
+            <div class="lecturer-stat-note"><a href="{% url 'complaint_queue' %}" style="color: #1d4ed8; text-decoration: none;">Review queue</a></div>
+        </div>
+    </div>
+
+    <div class="section-divider">My assigned courses</div>
+
+    {% if lecturer_courses %}
+        <div class="lecturer-course-list">
+            {% for course in lecturer_courses %}
+                <a class="lecturer-course-card" href="{% url 'course_results' course.id %}">
+                    <div class="lecturer-course-top">
+                        <div>
+                            <span class="lecturer-course-code">{{ course.code }}</span>
+                            <h3 class="lecturer-course-name">{{ course.title }}</h3>
+                            <div class="lecturer-course-programme">{{ course.programme.name }}</div>
+                        </div>
+                        <span class="lecturer-course-arrow"><i class="fa-solid fa-arrow-up-right-from-square"></i></span>
+                    </div>
+
+                    <div class="lecturer-course-meta">
+                        <span>{{ course.get_level_display }}</span>
+                        <span>{{ course.credit_units }} credit{{ course.credit_units|pluralize }}</span>
+                        <span>{{ course.semester.get_name_display }}</span>
+                    </div>
+
+                    <div class="lecturer-course-bottom">
+                        <span class="lecturer-course-hint">Open this course to manage submissions and scores.</span>
+                        <span class="lecturer-manage-button">Manage Results <i class="fa-solid fa-arrow-right"></i></span>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="lecturer-empty">
+            <div class="lecturer-empty-icon" style="font-size: 32px; color: #2563eb; margin-bottom: 12px;"><i class="fa-solid fa-book-open"></i></div>
+            <h3>No courses assigned yet</h3>
+            <p>Your assigned courses will appear here when an administrator assigns them.</p>
+        </div>
+    {% endif %}
+
+    <div class="session-panel">
+        <div>
+            <div class="session-label">Current academic session</div>
+            {% if current_session %}
+                <div class="session-name">{{ current_session.name }}</div>
+            {% else %}
+                <div class="session-name">No current session set</div>
+            {% endif %}
+        </div>
+        {% if current_session %}
+            <span class="session-status">● Active session</span>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

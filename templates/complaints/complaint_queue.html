@@ -1,0 +1,46 @@
+{% extends "accounts/base.html" %}
+{% block title %}Complaint Queue{% endblock %}
+{% block page_title %}Complaint Queue{% endblock %}
+{% block content %}
+<style>
+    .queue-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+    .queue-link {
+        display: inline-block; padding: 8px 12px; border-radius: 999px; text-decoration: none; color: #475569; background: #fff; border: 1px solid #dfeaf5; font-size: 12px; font-weight: 700;
+    }
+    .queue-link.active { background: #edf2ff; color: #2149b5; }
+    .complaint-list { display: grid; gap: 12px; }
+    .complaint-item { background: #fff; border: 1px solid #e5eaf2; border-radius: 14px; padding: 18px; }
+    .complaint-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .status-pill { display: inline-flex; align-items: center; padding: 6px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; background: #edf2ff; color: #3148a8; }
+    .link-btn { color: #3157d5; font-size: 12px; font-weight: 700; text-decoration: none; }
+</style>
+<div class="queue-bar">
+    <a class="queue-link {% if status_filter == 'all' %}active{% endif %}" href="{% url 'complaint_queue' %}?status=all">All</a>
+    <a class="queue-link {% if status_filter == 'SUBMITTED' %}active{% endif %}" href="{% url 'complaint_queue' %}?status=SUBMITTED">Submitted</a>
+    <a class="queue-link {% if status_filter == 'UNDER_REVIEW' %}active{% endif %}" href="{% url 'complaint_queue' %}?status=UNDER_REVIEW">Under Review</a>
+    <a class="queue-link {% if status_filter == 'AWAITING_LECTURER' %}active{% endif %}" href="{% url 'complaint_queue' %}?status=AWAITING_LECTURER">Awaiting Lecturer</a>
+    <a class="queue-link {% if status_filter == 'AWAITING_EXAM_OFFICER' %}active{% endif %}" href="{% url 'complaint_queue' %}?status=AWAITING_EXAM_OFFICER">Awaiting Exam Officer</a>
+    <a class="queue-link {% if status_filter == 'AWAITING_HOD' %}active{% endif %}" href="{% url 'complaint_queue' %}?status=AWAITING_HOD">Awaiting HOD</a>
+</div>
+
+<div class="complaint-list">
+    {% if complaints %}
+        {% for complaint in complaints %}
+            <div class="complaint-item">
+                <div class="complaint-head">
+                    <div>
+                        <strong>{{ complaint.reference_number }}</strong>
+                        <div style="color:#64748b; font-size:12px; margin-top: 6px;">{{ complaint.student.get_full_name|default:complaint.student.username }} · {{ complaint.result.course_registration.course.code }}</div>
+                    </div>
+                    <span class="status-pill">{{ complaint.get_status_display }}</span>
+                </div>
+                <div style="margin-top: 12px; color:#475569; font-size:13px;">{{ complaint.subject }}</div>
+                <div style="margin-top: 8px; color:#64748b; font-size:12px;">Submitted {{ complaint.created_at|date:"d M, Y" }}</div>
+                <div style="margin-top: 12px;"><a class="link-btn" href="{% url 'complaint_detail' complaint.reference_number %}">Open complaint</a></div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="card"><p>No complaints match the current filter.</p></div>
+    {% endif %}
+</div>
+{% endblock %}

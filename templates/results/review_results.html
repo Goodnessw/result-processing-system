@@ -1,0 +1,196 @@
+{% extends "accounts/base.html" %}
+{% block title %}Review Results{% endblock %}
+{% block page_title %}Examination Officer Review{% endblock %}
+
+{% block content %}
+<style>
+    .review-page { color: #172033; }
+    .review-header {
+        padding: 25px; border: 1px solid #e3eaf5; border-radius: 17px;
+        background: linear-gradient(120deg, #fff, #f0f5ff); margin-bottom: 22px;
+    }
+    .review-back {
+        display: inline-block; color: #3159b7 !important; text-decoration: none !important;
+        font-size: 13px; font-weight: 650; margin-bottom: 19px;
+    }
+    .review-header h1 { margin: 0; font-size: 25px; letter-spacing: -.5px; }
+    .review-summary {
+        display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 13px; margin-bottom: 23px;
+    }
+    .review-card {
+        padding: 17px; border: 1px solid #e5eaf2; border-radius: 13px; background: #fff;
+    }
+    .review-label { color: #64748b; font-size: 12px; }
+    .review-value { font-size: 25px; font-weight: 750; margin-top: 7px; }
+    .review-toolbar {
+        display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px;
+    }
+    .review-filter {
+        padding: 9px 12px; border-radius: 9px; border: 1px solid #d7dfeb; background: #fff;
+        font-size: 12px; font-weight: 700; color: #334155; text-decoration: none;
+    }
+    .review-filter.active {
+        background: #eaf0ff; border-color: #cdddff; color: #3159b7;
+    }
+    .review-panel { background: white; border: 1px solid #e5eaf2; border-radius: 16px; overflow: hidden; }
+    .review-panel-header {
+        display: flex; justify-content: space-between; align-items: center; gap: 12px;
+        padding: 20px 22px; border-bottom: 1px solid #e8edf4;
+    }
+    .review-panel-header h2 { margin: 0; font-size: 17px; }
+    .review-table-wrap { overflow-x: auto; }
+    .review-table { width: 100%; border-collapse: collapse; text-align: left; min-width: 950px; }
+    .review-table th { padding: 13px 15px; color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: .45px; }
+    .review-table td { padding: 15px; border-top: 1px solid #edf0f5; font-size: 13px; }
+    .review-student-name { font-weight: 700; color: #1e293b; }
+    .review-matric { font-size: 11px; color: #64748b; margin-top: 4px; }
+    .review-course { font-weight: 650; color: #3159b7; }
+    .review-grade { display: inline-block; min-width: 27px; text-align: center; background: #eaf0ff; color: #3159b7; border-radius: 7px; padding: 5px 7px; font-weight: 750; }
+    .review-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .review-btn {
+        display: inline-flex; justify-content: center; align-items: center; gap: 8px;
+        border: 1px solid transparent; border-radius: 9px; padding: 10px 14px;
+        font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+        text-decoration: none !important; transition: background .15s, transform .15s;
+    }
+    .review-btn:hover { transform: translateY(-1px); }
+    .review-btn-approve { color: #fff !important; background: #15803d; }
+    .review-btn-approve:hover { background: #166534; }
+    .review-btn-reject { color: #fff !important; background: #b91c1c; }
+    .review-btn-reject:hover { background: #991b1b; }
+    .review-form { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .review-reason {
+        width: 220px; padding: 9px 12px; border: 1px solid #cfd8e6; border-radius: 8px;
+        font: inherit; font-size: 13px; outline: none; background: #fff;
+    }
+    .review-reason:focus { border-color: #4169df; box-shadow: 0 0 0 3px #4169df20; }
+    .review-message {
+        border: 1px solid #dbe4f0; background: #f8fafc; color: #334155;
+        border-radius: 10px; padding: 12px 15px; margin-bottom: 10px; font-size: 13px;
+    }
+    .review-empty { padding: 40px 20px; text-align: center; }
+    .review-empty h3 { margin: 0 0 8px; }
+    .review-empty p { color: #64748b; font-size: 13px; }
+    @media (max-width: 700px) {
+        .review-summary { grid-template-columns: 1fr 1fr; }
+        .review-header { padding: 20px; }
+        .review-header h1 { font-size: 21px; }
+        .review-panel-header { align-items: flex-start; flex-direction: column; }
+        .review-form { display: block; }
+        .review-reason { width: 100%; margin-bottom: 10px; }
+    }
+</style>
+
+<div class="review-page">
+    <div class="review-header">
+        <a href="{{ dashboard_url }}" class="review-back">← Back to dashboard</a>
+        <h1>Examination officer review queue</h1>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="review-message" role="status">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="review-summary">
+        <div class="review-card">
+            <div class="review-label">Pending verification</div>
+            <div class="review-value">{{ pending_count }}</div>
+        </div>
+        <div class="review-card">
+            <div class="review-label">Verified / forwarded</div>
+            <div class="review-value">{{ verified_count }}</div>
+        </div>
+        <div class="review-card">
+            <div class="review-label">Approved by HOD</div>
+            <div class="review-value">{{ approved_count }}</div>
+        </div>
+        <div class="review-card">
+            <div class="review-label">Rejected</div>
+            <div class="review-value">{{ rejected_count }}</div>
+        </div>
+    </div>
+
+    <div class="review-toolbar">
+        <a class="review-filter {% if status_filter == 'pending' %}active{% endif %}" href="{% url 'review_results' %}?status=pending">Pending</a>
+        <a class="review-filter {% if status_filter == 'verified' %}active{% endif %}" href="{% url 'review_results' %}?status=verified">Verified / Forwarded</a>
+        <a class="review-filter {% if status_filter == 'approved' %}active{% endif %}" href="{% url 'review_results' %}?status=approved">Approved</a>
+        <a class="review-filter {% if status_filter == 'rejected' %}active{% endif %}" href="{% url 'review_results' %}?status=rejected">Rejected</a>
+    </div>
+
+    <div class="review-panel">
+        <div class="review-panel-header">
+            <div>
+                <h2>Results list</h2>
+            </div>
+        </div>
+
+        {% if results %}
+            <div class="review-table-wrap">
+                <table class="review-table">
+                    <thead>
+                        <tr>
+                            <th>Course</th>
+                            <th>Student</th>
+                            <th>CA</th>
+                            <th>Exam</th>
+                            <th>Total</th>
+                            <th>Grade</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in results %}
+                            <tr>
+                                <td>
+                                    <div class="review-course">{{ result.course_registration.course.code }}</div>
+                                </td>
+                                <td>
+                                    <div class="review-student-name">
+                                        {{ result.course_registration.student.user.get_full_name|default:result.course_registration.student.user.username }}
+                                    </div>
+                                    <div class="review-matric">
+                                        {{ result.course_registration.student.user.matric_number|default:"No matric number" }}
+                                    </div>
+                                </td>
+                                <td>{{ result.ca_score }}</td>
+                                <td>{{ result.exam_score }}</td>
+                                <td>{{ result.total_score }}</td>
+                                <td><span class="review-grade">{{ result.grade }}</span></td>
+                                <td>{{ result.get_status_display }}</td>
+                                <td>
+                                    {% if result.status == 'SUBMITTED' %}
+                                        <form class="review-form" method="post">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="result_id" value="{{ result.id }}">
+                                            <input type="hidden" name="action" value="verify">
+                                            <button type="submit" class="review-btn review-btn-approve">Verify</button>
+                                        </form>
+                                        <form class="review-form" method="post" style="margin-top: 10px;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="result_id" value="{{ result.id }}">
+                                            <input type="hidden" name="action" value="reject">
+                                            <input class="review-reason" type="text" name="reason" placeholder="Rejection reason" maxlength="255" required>
+                                            <button type="submit" class="review-btn review-btn-reject">Reject</button>
+                                        </form>
+                                    {% else %}
+                                        <span style="color:#64748b; font-size:12px;">Awaiting HOD action</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="review-empty">
+                <h3>No results in this review queue.</h3>
+                <p>Results will appear here once a lecturer submits them or when the HOD needs to review verified entries.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

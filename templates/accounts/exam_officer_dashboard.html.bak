@@ -1,0 +1,28 @@
+{% extends "accounts/base.html" %}
+{% block title %}Examination Officer Dashboard{% endblock %}
+{% block page_title %}Examination Office{% endblock %}
+{% block content %}
+<div class="welcome">
+    <h1>Welcome back, {{ request.user.first_name|default:request.user.username }}</h1>
+    <p>Manage academic result processing, submissions and examination records.</p>
+</div>
+<div class="section-heading">Examination management</div>
+<div class="cards">
+    <a href="{% url 'review_results' %}" class="card" style="text-decoration: none; color: inherit; display: block;">
+        <div class="card-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+        <h3>Submitted Results</h3>
+        <p>Review submissions from lecturers, approve valid results, or reject with a reason.</p>
+    </a>
+    <div class="card">
+        <div class="card-icon"><i class="fa-solid fa-circle-check"></i></div>
+        <h3>Result Verification</h3>
+        <p>Verify marks and processing requirements before results move forward for approval.</p>
+    </div>
+    <div class="card">
+        <div class="card-icon"><i class="fa-solid fa-file-lines"></i></div>
+        <h3>Result Reports</h3>
+        <p>Access departmental and course result reports as they become available.</p>
+    </div>
+</div>
+<div class="notice">Submitted results are now available for review in the approval workflow. Rejections must include a reason and are recorded in the audit log.</div>
+{% endblock %}

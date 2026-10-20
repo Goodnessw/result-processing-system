@@ -1,0 +1,28 @@
+{% extends "accounts/base.html" %}
+{% block title %}Head of Department Dashboard{% endblock %}
+{% block page_title %}Department Dashboard{% endblock %}
+{% block content %}
+<div class="welcome">
+    <h1>Welcome back, {{ request.user.first_name|default:request.user.username }}</h1>
+    <p>Your departmental workspace for academic oversight and result approval.</p>
+</div>
+<div class="section-heading">Department overview</div>
+<div class="cards">
+    <div class="card">
+        <div class="card-icon"><i class="fa-solid fa-building-columns"></i></div>
+        <h3>Department Results</h3>
+        <p>Review course results and departmental academic records.</p>
+    </div>
+    <div class="card">
+        <div class="card-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+        <h3>Approval Review</h3>
+        <p>Review verified results before final approval and publication.</p>
+    </div>
+    <div class="card">
+        <div class="card-icon"><i class="fa-solid fa-chart-column"></i></div>
+        <h3>Academic Reports</h3>
+        <p>Access departmental performance summaries and result reports.</p>
+    </div>
+</div>
+<div class="notice">Department-level data filtering and result approval will be enforced by the backend when those workflows are implemented.</div>
+{% endblock %}

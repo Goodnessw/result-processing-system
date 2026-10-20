@@ -1,0 +1,125 @@
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
+
+from accounts.models import User
+from academics.models import (
+    StudentProfile,
+    Course,
+    CourseRegistration,
+    AcademicSession,
+    Department,
+)
+from results.models import Result
+
+
+@login_required
+def dashboard(request):
+    user = request.user
+
+    if user.role == User.Role.STUDENT:
+        try:
+            student = StudentProfile.objects.select_related(
+                "programme", "programme__department"
+            ).get(user=user)
+        except StudentProfile.DoesNotExist:
+            return render(
+                request,
+                "accounts/student_dashboard.html",
+                {
+                    "student": None,
+                    "registered_courses": 0,
+                    "results_count": 0,
+                    "approved_results": [],
+                },
+            )
+
+        registrations = CourseRegistration.objects.filter(
+            student=student,
+            status=CourseRegistration.RegistrationStatus.REGISTERED,
+        )
+
+        results = Result.objects.filter(
+            course_registration__student=student,
+            status=Result.Status.APPROVED,
+        ).select_related("course_registration__course")
+
+        return render(
+            request,
+            "accounts/student_dashboard.html",
+            {
+                "student": student,
+                "registered_courses": registrations.count(),
+                "results_count": results.count(),
+                "approved_results": results,
+            },
+        )
+
+    if user.role == User.Role.LECTURER:
+        lecturer_courses = Course.objects.filter(
+            lecturer=user,
+            is_active=True,
+        ).select_related(
+            "programme",
+            "semester",
+            "semester__session",
+        )
+
+        lecturer_results = Result.objects.filter(
+            course_registration__course__lecturer=user,
+        )
+
+        return render(
+            request,
+            "accounts/lecturer_dashboard.html",
+            {
+                "total_courses": lecturer_courses.count(),
+                "lecturer_courses": lecturer_courses,
+                "current_session": AcademicSession.objects.filter(
+                    is_current=True
+                ).first(),
+                "pending_results": lecturer_results.filter(
+                    status=Result.Status.DRAFT
+                ).count(),
+                "submitted_results": lecturer_results.filter(
+                    status=Result.Status.SUBMITTED
+                ).count(),
+            },
+        )
+
+    if user.role == User.Role.EXAM_OFFICER:
+        return render(
+            request,
+            "accounts/exam_officer_dashboard.html",
+            {
+                "total_students": StudentProfile.objects.count(),
+                "total_courses": Course.objects.filter(
+                    is_active=True
+                ).count(),
+                "pending_results": Result.objects.filter(
+                    status=Result.Status.SUBMITTED
+                ).count(),
+                "approved_results": Result.objects.filter(
+                    status=Result.Status.APPROVED
+                ).count(),
+            },
+        )
+
+    if user.role == User.Role.HOD:
+        return render(
+            request,
+            "accounts/hod_dashboard.html",
+            {
+                "total_students": StudentProfile.objects.count(),
+                "total_courses": Course.objects.filter(
+                    is_active=True
+                ).count(),
+                "total_departments": Department.objects.filter(
+                    is_active=True
+                ).count(),
+                "pending_results": Result.objects.filter(
+                    status=Result.Status.SUBMITTED
+                ).count(),
+            },
+        )
+
+    return redirect("admin:index")

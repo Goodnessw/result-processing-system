@@ -1,0 +1,31 @@
+{% extends "accounts/base.html" %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+{% block content %}
+<div class="form-shell">
+    <div class="form-card">
+        <h2>{{ page_title }}</h2>
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="field-row">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    <div class="field-control">
+                        {{ field }}
+                        {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+                        {% if field.errors %}<div class="field-errors">{{ field.errors }}</div>{% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+            <div class="form-actions">
+                <button type="submit" class="submit-btn">Save</button>
+            </div>
+        </form>
+        {% if session %}
+            <div style="margin-top:20px;">
+                <a href="{% url 'admin_semester_create' session.id %}" class="secondary-btn">Add semester</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

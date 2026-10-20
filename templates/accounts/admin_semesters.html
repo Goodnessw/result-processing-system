@@ -1,0 +1,46 @@
+{% extends "accounts/base.html" %}
+{% block title %}Academic Semesters{% endblock %}
+{% block page_title %}Academic Semesters{% endblock %}
+{% block content %}
+<div class="page-shell">
+    <div class="page-header">
+        <div>
+            <span class="page-kicker">Academic calendar</span>
+            <h2>Academic Semesters</h2>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <a href="{% url 'admin_sessions' %}" class="secondary-btn">Back to sessions</a>
+            <a href="{% url 'admin_semester_create_direct' %}" class="primary-btn">Create semester</a>
+        </div>
+    </div>
+
+    <div class="data-panel">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Session</th>
+                    <th>Semester</th>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Current</th>
+                    <th class="row-actions">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for semester in semesters %}
+                    <tr>
+                        <td>{{ semester.session.name }}</td>
+                        <td>{{ semester.get_name_display }}</td>
+                        <td>{{ semester.start_date }}</td>
+                        <td>{{ semester.end_date }}</td>
+                        <td>{{ semester.is_current|yesno:"Yes,No" }}</td>
+                        <td class="row-actions"><a href="{% url 'admin_semester_edit' semester.id %}">Edit</a></td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6" class="empty-state">No semesters yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,180 @@
+{% extends "accounts/base.html" %}
+{% block title %}Submit Complaint{% endblock %}
+{% block page_title %}Submit Complaint{% endblock %}
+{% block content %}
+<style>
+    .complaint-form-wrap {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    .complaint-card {
+        background: #fff;
+        border: 1px solid #e5eaf2;
+        border-radius: 16px;
+        padding: 28px;
+    }
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+    }
+    .field {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .field.full { grid-column: 1 / -1; }
+    label {
+        font-size: 12px;
+        font-weight: 700;
+        color: #475569;
+    }
+    .form-control {
+        width: 100%;
+        border: 1px solid #d9e1ee;
+        border-radius: 10px;
+        padding: 11px 12px;
+        font: inherit;
+        background: #fff;
+    }
+    textarea.form-control { min-height: 120px; resize: vertical; }
+    .form-help {
+        color: #64748b;
+        font-size: 12px;
+        line-height: 1.6;
+    }
+    .notice {
+        background: #fff7ed;
+        border: 1px solid #fed7aa;
+        border-radius: 10px;
+        padding: 12px 14px;
+        color: #9a5b00;
+        margin-bottom: 18px;
+    }
+    .btn-row {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 22px;
+    }
+    .btn {
+        border: 0;
+        border-radius: 10px;
+        background: #3157d5;
+        color: #fff;
+        padding: 12px 18px;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    .inline-note {
+        color: #64748b;
+        font-size: 12px;
+        margin-top: 4px;
+    }
+    @media (max-width: 700px) {
+        .form-grid { grid-template-columns: 1fr; }
+        .complaint-card { padding: 20px; }
+    }
+</style>
+<div class="complaint-form-wrap">
+    <div class="complaint-card">
+        <h2>Report a result issue</h2>
+        <p class="form-help">Select the semester, then choose the relevant result. If a result is missing, use the “Missing result” option.</p>
+
+        {% if form.errors %}
+            <div class="notice">
+                {% for field in form %}
+                    {% for error in field.errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                    <div>{{ error }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <script>
+                // When semester changes, reload the page via GET to refresh result choices
+                function complaintSemesterChanged(value) {
+                    const params = new URLSearchParams();
+                    if (value) params.set('semester', value);
+                    const url = window.location.pathname + (params.toString() ? ('?' + params.toString()) : '');
+                    window.location.href = url;
+                }
+                document.addEventListener('DOMContentLoaded', function(){
+                    const sem = document.getElementById('id_semester');
+                    if (sem) {
+                        // robust: attach both event listener and set onchange handler
+                        sem.addEventListener('change', function(e){ complaintSemesterChanged(this.value); });
+                        sem.onchange = function(){ complaintSemesterChanged(this.value); };
+                    }
+                });
+            </script>
+            <div class="form-grid">
+                <div class="field">
+                    <label for="id_semester">Semester</label>
+                    {{ form.semester }}
+                    {% if form.semester.errors %}
+                        <div class="form-help" style="color:#b42318;">{{ form.semester.errors|join:", " }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="field full">
+                    <label for="id_result">Result / missing result</label>
+                    {{ form.result }}
+                    <div class="inline-note">Course code, title and final grade are shown for each result. Use the “Missing result” category if the result is absent.</div>
+                    {% if form.result.errors %}
+                        <div class="form-help" style="color:#b42318;">{{ form.result.errors|join:", " }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="field">
+                    <label for="id_category">Complaint category</label>
+                    {{ form.category }}
+                    {% if form.category.errors %}
+                        <div class="form-help" style="color:#b42318;">{{ form.category.errors|join:", " }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="field">
+                    <label for="id_subject">Subject</label>
+                    {{ form.subject }}
+                    {% if form.subject.errors %}
+                        <div class="form-help" style="color:#b42318;">{{ form.subject.errors|join:", " }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="field full">
+                    <label for="id_description">Detailed description</label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                        <div class="form-help" style="color:#b42318;">{{ form.description.errors|join:", " }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="field">
+                    <label for="id_contact_preference">Contact preference</label>
+                    {{ form.contact_preference }}
+                </div>
+
+                <div class="field">
+                    <label for="id_contact_details">Contact details</label>
+                    {{ form.contact_details }}
+                </div>
+
+                <div class="field full">
+                    <label for="id_requested_resolution">Requested resolution</label>
+                    {{ form.requested_resolution }}
+                </div>
+            </div>
+
+            <div class="btn-row">
+                <button class="btn" type="submit">Submit complaint</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

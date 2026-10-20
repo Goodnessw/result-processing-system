@@ -1,0 +1,322 @@
+
+{% extends "accounts/base.html" %}
+
+{% block title %}Manage Course Results{% endblock %}
+{% block page_title %}Manage Course Results{% endblock %}
+
+{% block content %}
+<style>
+    .result-page { color: #172033; }
+    .result-header {
+        padding: 25px; border: 1px solid #e3eaf5; border-radius: 17px;
+        background: linear-gradient(120deg, #fff, #f0f5ff); margin-bottom: 22px;
+    }
+    .result-back {
+        display: inline-block; color: #3159b7 !important; text-decoration: none !important;
+        font-size: 13px; font-weight: 650; margin-bottom: 19px;
+    }
+    .result-back:hover { text-decoration: underline !important; }
+    .result-course-code {
+        display: inline-block; padding: 5px 9px; border-radius: 7px;
+        background: #e7eeff; color: #3159b7; font-size: 12px; font-weight: 750;
+        margin-bottom: 10px;
+    }
+    .result-header h1 { margin: 0 0 8px; font-size: 25px; letter-spacing: -.5px; }
+    .result-header p { margin: 0; color: #64748b; font-size: 13px; line-height: 1.7; }
+    .result-summary {
+        display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 13px; margin-bottom: 23px;
+    }
+    .result-summary-card {
+        padding: 17px; border: 1px solid #e5eaf2; border-radius: 13px; background: #fff;
+    }
+    .result-summary-label { color: #64748b; font-size: 12px; }
+    .result-summary-value { font-size: 25px; font-weight: 750; margin-top: 7px; }
+    .result-panel { background: white; border: 1px solid #e5eaf2; border-radius: 16px; overflow: hidden; }
+    .result-panel-header {
+        display: flex; justify-content: space-between; align-items: center; gap: 12px;
+        padding: 20px 22px; border-bottom: 1px solid #e8edf4;
+    }
+    .result-panel-header h2 { margin: 0 0 5px; font-size: 17px; }
+    .result-panel-header p { margin: 0; color: #64748b; font-size: 12px; }
+    .result-table-wrap { overflow-x: auto; }
+    .result-table { width: 100%; border-collapse: collapse; text-align: left; min-width: 790px; }
+    .result-table thead { background: #f8fafc; }
+    .result-table th {
+        padding: 13px 15px; color: #64748b; font-size: 11px;
+        text-transform: uppercase; letter-spacing: .45px; white-space: nowrap;
+    }
+    .result-table td { padding: 15px; border-top: 1px solid #edf0f5; font-size: 13px; }
+    .result-table tbody tr:hover { background: #fafcff; }
+    .result-student-name { font-weight: 700; color: #1e293b; }
+    .result-matric { font-size: 11px; color: #64748b; margin-top: 4px; }
+    .result-score-input {
+        display: block; width: 88px; box-sizing: border-box; padding: 10px;
+        border: 1px solid #cfd8e6; border-radius: 8px; background: #fff;
+        color: #172033; font: inherit; font-size: 13px; outline: none;
+        transition: border-color .15s, box-shadow .15s;
+    }
+    .result-score-input:focus { border-color: #4169df; box-shadow: 0 0 0 3px #4169df20; }
+    .result-score-input:disabled { background: #f1f5f9; color: #64748b; cursor: not-allowed; }
+    .result-total { font-weight: 750; font-size: 14px; }
+    .result-grade {
+        display: inline-block; min-width: 27px; text-align: center;
+        background: #eaf0ff; color: #3159b7; border-radius: 7px;
+        padding: 5px 7px; font-weight: 750;
+    }
+    .result-status {
+        display: inline-block; border-radius: 20px; padding: 5px 9px;
+        background: #fef3c7; color: #92400e; font-size: 11px; font-weight: 700;
+        white-space: nowrap;
+    }
+    .result-status-submitted { background: #dbeafe; color: #1d4ed8; }
+    .result-status-approved { background: #dcfce7; color: #166534; }
+    .result-status-rejected { background: #fee2e2; color: #991b1b; }
+    .result-actions {
+        display: flex; flex-wrap: wrap; align-items: center; gap: 11px;
+        padding: 19px 22px; border-top: 1px solid #e8edf4; background: #fbfcfe;
+    }
+    .result-btn {
+        display: inline-flex; justify-content: center; align-items: center; gap: 8px;
+        border: 1px solid transparent; border-radius: 9px; padding: 11px 17px;
+        font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+        text-decoration: none !important; transition: background .15s, transform .15s;
+    }
+    .result-btn:hover { transform: translateY(-1px); }
+    .result-btn-primary { color: #fff !important; background: #244fc5; }
+    .result-btn-primary:hover { background: #1d40a1; }
+    .result-btn-submit { color: #fff !important; background: #15803d; }
+    .result-btn-submit:hover { background: #166534; }
+    .result-btn-secondary { color: #334155 !important; background: #fff; border-color: #d7dfeb; }
+    .result-btn-secondary:hover { background: #f1f5f9; }
+    .result-help { width: 100%; color: #64748b; font-size: 12px; line-height: 1.6; }
+    .result-message {
+        border: 1px solid #dbe4f0; background: #f8fafc; color: #334155;
+        border-radius: 10px; padding: 12px 15px; margin-bottom: 10px; font-size: 13px;
+    }
+    .result-empty { padding: 40px 20px; text-align: center; }
+    .result-empty h3 { margin: 0 0 8px; }
+    .result-empty p { color: #64748b; font-size: 13px; }
+    @media (max-width: 650px) {
+        .result-summary { grid-template-columns: 1fr; }
+        .result-header { padding: 20px; }
+        .result-header h1 { font-size: 21px; }
+        .result-panel-header { align-items: flex-start; flex-direction: column; }
+        .result-actions { padding: 16px; }
+        .result-btn { width: 100%; box-sizing: border-box; }
+    }
+</style>
+
+<div class="result-page">
+    <div class="result-header">
+        <a href="{{ dashboard_url }}" class="result-back">← Back to dashboard</a>
+        <div>
+            <span class="result-course-code">{{ course.code }}</span>
+            <h1>{{ course.title }}</h1>
+            <p>
+                {{ course.programme.name }} ·
+                {{ course.get_level_display }} ·
+                {{ course.semester.get_name_display }} ·
+                {{ course.credit_units }} credit{{ course.credit_units|pluralize }}
+            </p>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="result-message" role="status">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+<div class="result-panel" style="margin-bottom: 22px;">
+    <div class="result-panel-header">
+        <div>
+            <h2>Import results from Excel</h2>
+            <p>Download the official template, enter scores for all registered students, then upload it for validation.</p>
+        </div>
+    </div>
+
+    <div style="padding: 22px;">
+        <a
+            href="{% url 'download_result_template' course.id %}"
+            class="result-btn result-btn-secondary"
+            style="margin-bottom: 18px;"
+        >
+            ↓ Download Excel Template
+        </a>
+
+        <form
+            method="post"
+            action="{% url 'upload_result_excel' course.id %}"
+            enctype="multipart/form-data"
+        >
+            {% csrf_token %}
+
+            <div style="margin-bottom: 14px;">
+                <label for="excel_file" style="display: block; font-size: 13px; font-weight: 700; margin-bottom: 8px;">
+                    Completed Excel file (.xlsx)
+                </label>
+
+                <input
+                    id="excel_file"
+                    type="file"
+                    name="excel_file"
+                    accept=".xlsx"
+                    required
+                    style="display: block; max-width: 100%; font-size: 13px;"
+                >
+            </div>
+
+            <button type="submit" class="result-btn result-btn-primary">
+                Upload and Preview Results
+            </button>
+
+            <div class="result-help" style="margin-top: 12px;">
+                CA: 0–30 marks. Exam: 0–70 marks. Every registered student must have both scores.
+                The spreadsheet will be validated before any results are saved.
+            </div>
+        </form>
+    </div>
+</div>
+    <div class="result-summary">
+        <div class="result-summary-card">
+            <div class="result-summary-label">Registered students</div>
+            <div class="result-summary-value">{{ total_students }}</div>
+        </div>
+        <div class="result-summary-card">
+            <div class="result-summary-label">Results saved</div>
+            <div class="result-summary-value">{{ result_count }}</div>
+        </div>
+        <div class="result-summary-card">
+            <div class="result-summary-label">Maximum total score</div>
+            <div class="result-summary-value">100</div>
+        </div>
+    </div>
+
+    <div class="result-panel">
+        <div class="result-panel-header">
+            <div>
+                <h2>Student assessment results</h2>
+                <p>Enter continuous assessment and examination scores for each registered student.</p>
+            </div>
+            <span class="result-course-code">CA / 30 · Exam / 70</span>
+        </div>
+
+        {% if rows %}
+            <form method="post">
+                {% csrf_token %}
+                <div class="result-table-wrap">
+                    <table class="result-table">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>CA score</th>
+                                <th>Exam score</th>
+                                <th>Total / 100</th>
+                                <th>Grade</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in rows %}
+                                <tr>
+                                    <td>
+                                        <div class="result-student-name">
+                                            {{ row.registration.student.user.get_full_name|default:row.registration.student.user.username }}
+                                        </div>
+                                        <div class="result-matric">
+                                            {{ row.registration.student.user.matric_number|default:"No matric number" }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <input
+                                            class="result-score-input"
+                                            type="number"
+                                            name="ca_{{ row.registration.id }}"
+                                            value="{{ row.ca_value }}"
+                                            min="0"
+                                            max="30"
+                                            step="0.01"
+                                            placeholder="0–30"
+                                            aria-label="CA score for {{ row.registration.student }}"
+                                            {% if row.result.status == "SUBMITTED" or row.result.status == "APPROVED" %}disabled{% endif %}
+                                        >
+                                    </td>
+                                    <td>
+                                        <input
+                                            class="result-score-input"
+                                            type="number"
+                                            name="exam_{{ row.registration.id }}"
+                                            value="{{ row.exam_value }}"
+                                            min="0"
+                                            max="70"
+                                            step="0.01"
+                                            placeholder="0–70"
+                                            aria-label="Exam score for {{ row.registration.student }}"
+                                            {% if row.result.status == "SUBMITTED" or row.result.status == "APPROVED" %}disabled{% endif %}
+                                        >
+                                    </td>
+                                    <td>
+                                        <span class="result-total">
+                                            {% if row.result %}{{ row.result.total_score }}{% else %}—{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if row.result %}
+                                            <span class="result-grade">{{ row.result.grade }}</span>
+                                        {% else %}
+                                            —
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if row.result %}
+                                            <span class="result-status
+                                                {% if row.result.status == 'SUBMITTED' %}result-status-submitted{% elif row.result.status == 'APPROVED' %}result-status-approved{% elif row.result.status == 'REJECTED' %}result-status-rejected{% endif %}">
+                                                {{ row.result.get_status_display }}
+                                            </span>
+                                        {% else %}
+                                            <span class="result-status">Not entered</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="result-actions">
+                    <button
+                        type="submit"
+                        name="action"
+                        value="save"
+                        class="result-btn result-btn-primary">
+                        Save Drafts
+                    </button>
+
+                    <button
+                        type="submit"
+                        name="action"
+                        value="submit"
+                        class="result-btn result-btn-submit"
+                        onclick="return confirm('Submit the saved results for this course for approval? You will not be able to edit submitted or approved scores.');">
+                        Submit for Approval →
+                    </button>
+
+                    <a href="{{ dashboard_url }}" class="result-btn result-btn-secondary">
+                        Cancel / Back
+                    </a>
+
+                    <div class="result-help">
+                        Save your scores as drafts before submitting. Submitted or approved results are locked against lecturer editing.
+                    </div>
+                </div>
+            </form>
+        {% else %}
+            <div class="result-empty">
+                <h3>No registered students</h3>
+                <p>Students registered for this course will appear here.</p>
+                <a href="{{ dashboard_url }}" class="result-btn result-btn-secondary">Back to dashboard</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

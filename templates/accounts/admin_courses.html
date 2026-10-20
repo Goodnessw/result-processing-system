@@ -1,0 +1,43 @@
+{% extends "accounts/base.html" %}
+{% block title %}Course Management{% endblock %}
+{% block page_title %}Course Management{% endblock %}
+{% block content %}
+<div class="page-shell">
+    <div class="page-header">
+        <div>
+            <span class="page-kicker">Academics</span>
+            <h2>Courses</h2>
+        </div>
+        <a href="{% url 'admin_course_create' %}" class="primary-btn">Create course</a>
+    </div>
+
+    <div class="data-panel">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Title</th>
+                    <th>Programme</th>
+                    <th>Semester</th>
+                    <th>Lecturer</th>
+                    <th class="row-actions">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in courses %}
+                    <tr>
+                        <td>{{ c.code }}</td>
+                        <td>{{ c.title }}</td>
+                        <td>{{ c.programme.name }}</td>
+                        <td>{{ c.semester.get_name_display }} ({{ c.semester.session.name }})</td>
+                        <td>{{ c.lecturer.get_full_name|default:c.lecturer.username|default:"Unassigned" }}</td>
+                        <td class="row-actions"><a href="{% url 'admin_course_edit' c.id %}">Edit</a></td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6" class="empty-state">No courses yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

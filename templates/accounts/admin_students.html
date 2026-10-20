@@ -1,0 +1,41 @@
+{% extends "accounts/base.html" %}
+{% block title %}Student Management{% endblock %}
+{% block page_title %}Student Management{% endblock %}
+{% block content %}
+<div class="page-shell">
+    <div class="page-header">
+        <div>
+            <span class="page-kicker">People</span>
+            <h2>Students</h2>
+        </div>
+        <a href="{% url 'admin_student_create' %}" class="primary-btn">Register student</a>
+    </div>
+
+    <div class="data-panel">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Matric</th>
+                    <th>Programme</th>
+                    <th>Admission</th>
+                    <th>Level</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in students %}
+                    <tr>
+                        <td>{{ s.get_full_name|default:s.username }}</td>
+                        <td>{{ s.matric_number|default:"-" }}</td>
+                        <td>{{ s.student_profile.programme.name|default:"-" }}</td>
+                        <td>{{ s.student_profile.admission_session.name|default:"-" }}</td>
+                        <td>{{ s.student_profile.get_current_level_display|default:"-" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="5" class="empty-state">No students found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

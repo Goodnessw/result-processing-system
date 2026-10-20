@@ -1,0 +1,119 @@
+{% extends "accounts/base.html" %}
+{% block title %}My Results{% endblock %}
+{% block page_title %}My Results{% endblock %}
+{% block content %}
+<style>
+    .results-page { color: #172033; }
+    .results-box { background: white; border: 1px solid #e5eaf2; border-radius: 16px; padding: 24px; }
+    .filters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+    .field select, .field input { width: 100%; padding: 10px 12px; border: 1px solid #d7dfeb; border-radius: 9px; font: inherit; }
+    .summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+    .summary-card { background: white; border: 1px solid #e5eaf2; border-radius: 14px; padding: 18px; }
+    .summary-label { color: #64748b; font-size: 12px; }
+    .summary-value { font-size: 26px; font-weight: 700; margin-top: 6px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px 10px; border-top: 1px solid #edf0f5; text-align: left; }
+    th { color: #64748b; font-size: 11px; text-transform: uppercase; }
+    .grade-pill { display: inline-block; min-width: 28px; text-align: center; padding: 5px 8px; border-radius: 999px; background: #edf2ff; color: #2149b5; font-weight: 700; }
+    @media (max-width: 700px) { .filters, .summary-grid { grid-template-columns: 1fr; } }
+</style>
+<div class="results-page">
+    <div class="results-box">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom: 18px;">
+            <div>
+                <h2 style="margin:0;">Academic Results</h2>
+                <div style="color:#64748b; font-size:12px; margin-top:6px;">{{ student.programme.name }} · {{ student.get_current_level_display }}</div>
+            </div>
+        </div>
+
+        <form method="get" class="filters">
+            <div class="field">
+                <label for="session" style="display:block; font-size:12px; margin-bottom:6px; color:#64748b;">Session</label>
+                <select id="session" name="session">
+                    {% for session in sessions %}
+                        <option value="{{ session.id }}" {% if selected_session and selected_session.id == session.id %}selected{% endif %}>{{ session.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field">
+                <label for="level" style="display:block; font-size:12px; margin-bottom:6px; color:#64748b;">Level</label>
+                <select id="level" name="level">
+                    {% for level in levels %}
+                        <option value="{{ level }}" {% if selected_level == level %}selected{% endif %}>{{ level }} Level</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field">
+                <label for="semester" style="display:block; font-size:12px; margin-bottom:6px; color:#64748b;">Semester</label>
+                <select id="semester" name="semester">
+                    <option value="">All semesters</option>
+                    {% for semester in semesters %}
+                        <option value="{{ semester.id }}" {% if selected_semester and selected_semester.id == semester.id %}selected{% endif %}>{{ semester.get_name_display }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field" style="display:flex; align-items:end;">
+                <button type="submit" style="width:100%; padding:10px 12px; border:0; border-radius:9px; background:#3157d5; color: white; font-weight:700; cursor:pointer;">View result</button>
+            </div>
+        </form>
+
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-label">Selected GPA</div>
+                <div class="summary-value">{{ gpa }}</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">CGPA</div>
+                <div class="summary-value">{{ cgpa }}</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Approved results</div>
+                <div class="summary-value">{{ results|length }}</div>
+            </div>
+        </div>
+
+        {% if results %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Course</th>
+                            <th>Credit</th>
+                            <th>CA</th>
+                            <th>Exam</th>
+                            <th>Total</th>
+                            <th>Grade</th>
+                            <th>GP</th>
+                            <th>Session</th>
+                            <th>Semester</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in results %}
+                            <tr>
+                                <td>{{ result.course_registration.course.code }}<br><span style="color:#64748b; font-size:12px;">{{ result.course_registration.course.title }}</span></td>
+                                <td>{{ result.course_registration.course.credit_units }}</td>
+                                <td>{{ result.ca_score }}</td>
+                                <td>{{ result.exam_score }}</td>
+                                <td>{{ result.total_score }}</td>
+                                <td><span class="grade-pill">{{ result.grade }}</span></td>
+                                <td>{{ result.grade_point }}</td>
+                                <td>{{ result.course_registration.course.semester.session.name }}</td>
+                                <td>{{ result.course_registration.course.semester.get_name_display }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="results-box" style="margin-top: 16px; background:#f8fafc; border-style:dashed;">
+                <p style="margin:0; color:#64748b;">
+                    No approved results are available for the selected session and semester yet.
+                    {% if selected_session %}The {{ selected_session.name }} {{ selected_semester.get_name_display|default:"selected semester" }} period has no published results at the moment.{% endif %}
+                </p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

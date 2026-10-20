@@ -1,0 +1,42 @@
+{% extends "accounts/base.html" %}
+{% block title %}Complaint History{% endblock %}
+{% block page_title %}Complaint History{% endblock %}
+{% block content %}
+<style>
+    .complaint-list { display: grid; gap: 14px; }
+    .complaint-item {
+        background: #fff; border: 1px solid #e5eaf2; border-radius: 14px; padding: 18px;
+    }
+    .complaint-head {
+        display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+    }
+    .status-pill {
+        display: inline-flex; align-items: center; padding: 6px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; background: #edf2ff; color: #3148a8;
+    }
+    .status-pill.resolved { background: #e7f9ef; color: #137a3a; }
+    .status-pill.rejected { background: #fff0f0; color: #b42318; }
+    .meta { color: #64748b; font-size: 12px; margin-top: 8px; }
+    .link-btn {
+        display: inline-block; margin-top: 12px; color: #3157d5; text-decoration: none; font-weight: 700; font-size: 12px;
+    }
+</style>
+<div class="complaint-list">
+    {% if complaints %}
+        {% for complaint in complaints %}
+            <div class="complaint-item">
+                <div class="complaint-head">
+                    <div>
+                        <strong>{{ complaint.reference_number }}</strong>
+                        <div class="meta">{{ complaint.result.course_registration.course.code }} · {{ complaint.subject }}</div>
+                    </div>
+                    <span class="status-pill {% if complaint.status == 'RESOLVED' %}resolved{% elif complaint.status == 'REJECTED' %}rejected{% endif %}">{{ complaint.get_status_display }}</span>
+                </div>
+                <div class="meta">Submitted {{ complaint.created_at|date:"d M, Y" }} · Category: {{ complaint.get_category_display }}</div>
+                <a class="link-btn" href="{% url 'complaint_detail' complaint.reference_number %}">View details</a>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="card"><p>No complaints submitted yet.</p></div>
+    {% endif %}
+</div>
+{% endblock %}

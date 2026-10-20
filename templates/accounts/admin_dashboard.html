@@ -1,0 +1,109 @@
+{% extends "accounts/base.html" %}
+{% block title %}Administrator Dashboard{% endblock %}
+{% block page_title %}Administrator Dashboard{% endblock %}
+{% block content %}
+<style>
+    .admin-shell { color: #172033; }
+    .admin-hero { padding: 28px; border-radius: 20px; background: linear-gradient(135deg, #fff 0%, #eef3ff 100%); border: 1px solid #e2e8f0; }
+    .admin-hero h1 { margin: 0 0 8px; font-size: 31px; }
+    .admin-hero p { margin: 0; color: #64748b; line-height: 1.7; }
+    .admin-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
+    .admin-card { background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 18px; }
+    .admin-card .label { color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+    .admin-card .value { font-size: 28px; font-weight: 800; margin-top: 12px; }
+    .admin-card .meta { margin-top: 8px; font-size: 12px; color: #64748b; }
+    .quick-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
+    .action-card { display: block; background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 18px; text-decoration: none; color: inherit; }
+    .action-card .icon { width: 42px; height: 42px; border-radius: 12px; background: #eaf0ff; display: grid; place-items: center; color: #2149b5; font-size: 20px; }
+    .action-card h3 { margin: 14px 0 8px; font-size: 16px; }
+    .action-card p { margin: 0; color: #64748b; font-size: 12px; line-height: 1.7; }
+    .split { display: grid; grid-template-columns: 1.2fr .8fr; gap: 18px; margin-top: 24px; }
+    .panel { background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 18px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #edf0f5; font-size: 13px; }
+    th { color: #64748b; font-size: 11px; text-transform: uppercase; }
+    @media (max-width: 900px){ .admin-grid, .quick-actions, .split { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 720px){ .admin-grid, .quick-actions, .split { grid-template-columns: 1fr; } }
+</style>
+<div class="admin-shell">
+    <div class="admin-hero">
+        <h1>University administration</h1>
+        <p>Monitor academic activity, manage staff and student lifecycles, and oversee registration and approval workflows.</p>
+    </div>
+
+    <div class="admin-grid">
+        <div class="admin-card"><div class="label">Students</div><div class="value">{{ total_students }}</div><div class="meta">Active student accounts</div></div>
+        <div class="admin-card"><div class="label">Lecturers</div><div class="value">{{ total_lecturers }}</div><div class="meta">Faculty and teaching staff</div></div>
+        <div class="admin-card"><div class="label">Courses</div><div class="value">{{ total_courses }}</div><div class="meta">Live academic offerings</div></div>
+        <div class="admin-card"><div class="label">Departments</div><div class="value">{{ total_departments }}</div><div class="meta">Academic units in the university</div></div>
+        <div class="admin-card"><div class="label">Pending regs</div><div class="value">{{ pending_registrations }}</div><div class="meta">Open registration actions</div></div>
+        <div class="admin-card"><div class="label">Awaiting verification</div><div class="value">{{ pending_results }}</div><div class="meta">Results needing exam officer review</div></div>
+        <div class="admin-card"><div class="label">Awaiting HOD</div><div class="value">{{ hod_results }}</div><div class="meta">Results pending final approval</div></div>
+        <div class="admin-card"><div class="label">Unresolved complaints</div><div class="value">{{ unresolved_complaints }}</div><div class="meta">Open complaint workflow items</div></div>
+    </div>
+
+    <div class="section-heading">Quick actions</div>
+    <div class="quick-actions">
+        <a class="action-card" href="{% url 'admin_student_create' %}">
+            <div class="icon"><i class="fa-solid fa-user-plus"></i></div>
+            <h3>Register student</h3>
+            <p>Create a new student account and profile.</p>
+        </a>
+        <a class="action-card" href="{% url 'admin_lecturer_create' %}">
+            <div class="icon"><i class="fa-solid fa-chalkboard-user"></i></div>
+            <h3>Add lecturer</h3>
+            <p>Create lecturer accounts and staff profiles.</p>
+        </a>
+        <a class="action-card" href="{% url 'admin_courses' %}">
+            <div class="icon"><i class="fa-solid fa-book"></i></div>
+            <h3>Manage courses</h3>
+            <p>Create, edit and reassign academic courses.</p>
+        </a>
+        <a class="action-card" href="{% url 'admin_sessions' %}">
+            <div class="icon"><i class="fa-solid fa-calendar-days"></i></div>
+            <h3>Academic sessions</h3>
+            <p>Open new sessions and manage semesters.</p>
+        </a>
+    </div>
+
+    <div class="split">
+        <div class="panel">
+            <div class="section-heading" style="margin-top: 0;">Recent users</div>
+            <table>
+                <thead>
+                    <tr><th>Name</th><th>Role</th><th>Username</th></tr>
+                </thead>
+                <tbody>
+                    {% for user in recent_users %}
+                        <tr>
+                            <td>{{ user.get_full_name|default:user.username }}</td>
+                            <td>{{ user.get_role_display }}</td>
+                            <td>{{ user.username }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="3">No recent users.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="panel">
+            <div class="section-heading" style="margin-top: 0;">Recent courses</div>
+            <table>
+                <thead>
+                    <tr><th>Code</th><th>Lecturer</th></tr>
+                </thead>
+                <tbody>
+                    {% for course in recent_courses %}
+                        <tr>
+                            <td>{{ course.code }}</td>
+                            <td>{{ course.lecturer.get_full_name|default:course.lecturer.username|default:"Unassigned" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="2">No courses created yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

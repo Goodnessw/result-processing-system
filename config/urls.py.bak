@@ -1,0 +1,50 @@
+from django.contrib import admin
+from django.contrib.auth import views as auth_views
+from django.urls import path
+
+from accounts.views import dashboard
+from results.views import course_results, review_results
+
+from results.bulk_views import (
+    download_result_template,
+    upload_result_excel,
+    preview_result_excel,
+)
+
+urlpatterns = [
+    path("admin/", admin.site.urls),
+    path("", dashboard, name="dashboard"),
+    path(
+        "login/",
+        auth_views.LoginView.as_view(
+            template_name="accounts/login.html"
+        ),
+        name="login",
+    ),
+    path("logout/", auth_views.LogoutView.as_view(), name="logout"),
+    path(
+        "results/review/",
+        review_results,
+        name="review_results",
+    ),
+    path(
+        "results/courses/<int:course_id>/",
+        course_results,
+        name="course_results",
+    ),
+    path(
+        "results/courses/<int:course_id>/excel-template/",
+        download_result_template,
+        name="download_result_template",
+    ),
+    path(
+        "results/courses/<int:course_id>/excel-upload/",
+        upload_result_excel,
+        name="upload_result_excel",
+    ),
+    path(
+        "results/courses/<int:course_id>/excel-preview/",
+        preview_result_excel,
+        name="preview_result_excel",
+    ),
+]

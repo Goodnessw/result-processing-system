@@ -1,0 +1,186 @@
+{% extends "accounts/base.html" %}
+{% block title %}Complaint Details{% endblock %}
+{% block page_title %}Complaint Details{% endblock %}
+{% block content %}
+<style>
+    .detail-layout { display: grid; grid-template-columns: 1.4fr .9fr; gap: 18px; }
+    .panel { background: #fff; border: 1px solid #e5eaf2; border-radius: 16px; padding: 22px; }
+    .row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .tag { display: inline-block; padding: 6px 10px; background: #edf2ff; border-radius: 999px; color: #2149b5; font-size: 11px; font-weight: 700; }
+    .meta { color: #64748b; font-size: 12px; }
+    .history-item, .note-item { border-top: 1px solid #edf0f5; padding-top: 12px; margin-top: 12px; }
+    .field textarea, .field input { width: 100%; border: 1px solid #d9e1ee; border-radius: 10px; padding: 11px 12px; font: inherit; }
+    .field textarea { min-height: 120px; resize: vertical; }
+    .action-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    .button { padding: 10px 14px; border-radius: 10px; border: 0; background: #3157d5; color: white; font: inherit; font-weight: 700; cursor: pointer; }
+    .button.secondary { background: #e3e9ff; color: #1c3b8d; }
+    .button.danger { background: #fee2e2; color: #991b1b; }
+    @media (max-width: 700px) { .detail-layout, .row { grid-template-columns: 1fr; } }
+</style>
+
+<div class="detail-layout">
+    <div class="panel">
+        <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:center;">
+            <div>
+                <div class="meta">Reference</div>
+                <h2 style="margin: 4px 0 0;">{{ complaint.reference_number }}</h2>
+            </div>
+            <span class="tag">{{ complaint.get_status_display }}</span>
+        </div>
+
+        <div class="row" style="margin-top: 20px;">
+            <div><div class="meta">Student</div><div>{{ complaint.student.get_full_name|default:complaint.student.username }}</div></div>
+            <div><div class="meta">Course</div><div>{{ complaint.result.course_registration.course.code }} - {{ complaint.result.course_registration.course.title }}</div></div>
+            <div><div class="meta">Category</div><div>{{ complaint.get_category_display }}</div></div>
+            <div><div class="meta">Submitted</div><div>{{ complaint.created_at|date:"d M, Y H:i" }}</div></div>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <div class="meta">Subject</div>
+            <div style="margin-top: 6px; font-weight: 700;">{{ complaint.subject }}</div>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <div class="meta">Description</div>
+            <p>{{ complaint.description }}</p>
+        </div>
+
+        {% if complaint.requested_resolution %}
+        <div style="margin-top: 20px;">
+            <div class="meta">Requested resolution</div>
+            <p>{{ complaint.requested_resolution }}</p>
+        </div>
+        {% endif %}
+
+        {% if can_manage %}
+            {% if complaint.result and complaint.result.course_registration and complaint.result.course_registration.course %}
+                <div style="margin-top:12px;">
+                    <a class="button secondary" href="{% url 'course_results' complaint.result.course_registration.course.id %}?focus_registration={{ complaint.result.course_registration.id }}">Open course result entry</a>
+                </div>
+            {% endif %}
+            <form method="post" style="margin-top: 18px;">
+                {% csrf_token %}
+                <div class="meta" style="margin-bottom: 10px;">Record the complaint outcome and route it through the approval chain.</div>
+                <div class="field">
+                    <label>Decision / reason</label>
+                    <textarea id="complaint-decision" name="decision" placeholder="Explain the reason for this action, such as: 'Result corrected', 'No correction required', 'Returned for re-check'..."></textarea>
+                    <div class="meta" style="margin-top: 8px;">Required only when closing a complaint as resolved or rejected.</div>
+                </div>
+
+                {% if allowed_actions %}
+                    <div style="margin-top: 16px;">
+                        <div class="meta" style="margin-bottom: 8px;">Workflow actions</div>
+                        <div class="action-row">
+                            {% if 'review' in allowed_actions %}
+                                <button class="button secondary" type="submit" name="action" value="review">Start review</button>
+                            {% endif %}
+                            {% if 'await_lecturer' in allowed_actions %}
+                                <button class="button secondary" type="submit" name="action" value="await_lecturer">Return to lecturer</button>
+                            {% endif %}
+                            {% if 'await_exam_officer' in allowed_actions %}
+                                <button class="button secondary" type="submit" name="action" value="await_exam_officer">Send to exam officer</button>
+                            {% endif %}
+                            {% if 'await_hod' in allowed_actions %}
+                                <button class="button secondary" type="submit" name="action" value="await_hod">Escalate to HOD</button>
+                            {% endif %}
+                            {% if 'resolve' in allowed_actions %}
+                                <button class="button" type="submit" name="action" value="resolve">Close as resolved</button>
+                            {% endif %}
+                            {% if 'reject' in allowed_actions %}
+                                <button class="button danger" type="submit" name="action" value="reject">Reject complaint</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            </form>
+
+            <form method="post" style="margin-top: 18px;">
+                {% csrf_token %}
+                <div class="field">
+                    <label>Internal note</label>
+                    <textarea name="note" placeholder="Add a private staff note..."></textarea>
+                </div>
+                <div class="action-row">
+                    {% if 'note' in allowed_actions %}
+                        <button class="button secondary" type="submit" name="action" value="note">Save internal note</button>
+                    {% endif %}
+                </div>
+            </form>
+        {% endif %}
+    </div>
+
+    <div class="panel">
+        <div style="margin-top: 22px;">
+            <h3>Delivery / read receipts</h3>
+            {% if complaint.receipt_summary_for_student %}
+                <div class="history-item">
+                    {% for item in complaint.receipt_summary_for_student %}
+                        <div style="display:flex; justify-content:space-between; gap:12px; align-items:center; padding:8px 0; border-top:1px solid #edf0f5;">
+                            <div>
+                                <div style="font-weight:700;">{{ item.label }}</div>
+                            </div>
+                            <div style="font-size:12px; color:#475569;">
+                                Delivered: {{ item.delivered|yesno:"Yes,No" }} · Read: {{ item.read|yesno:"Yes,No" }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>No delivery data yet.</p>
+            {% endif %}
+        </div>
+
+        <div style="margin-top: 22px;">
+            <h3>History</h3>
+            {% if history %}
+                {% for item in history %}
+                    <div class="history-item">
+                        <div class="meta">{{ item.created_at|date:"d M, Y H:i" }} · {{ item.actor.get_full_name|default:item.actor.username|default:'System' }}</div>
+                        <div style="margin-top: 6px; font-weight: 700;">{{ item.new_status }}</div>
+                        {% if item.message %}<div style="margin-top: 6px; font-size: 13px;">{{ item.message }}</div>{% endif %}
+                        {% if item.decision_message %}<div style="margin-top: 8px; font-size: 12px; color:#475569;">Decision: {{ item.decision_message }}</div>{% endif %}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No history yet.</p>
+            {% endif %}
+
+            <div style="margin-top: 22px;">
+                <h3>Internal notes</h3>
+                {% if notes %}
+                    {% for note in notes %}
+                        <div class="note-item">
+                            <div class="meta">{{ note.created_by.get_full_name|default:note.created_by.username|default:'Staff' }} · {{ note.created_at|date:"d M, Y H:i" }}</div>
+                            <div style="margin-top: 6px; font-size: 13px;">{{ note.note }}</div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p>No internal notes yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const decisionField = document.getElementById('complaint-decision');
+        const actionButtons = document.querySelectorAll('button[name="action"]');
+        if (!decisionField || !actionButtons.length) return;
+
+        function syncDecisionRequired(selectedAction) {
+            const needsReason = selectedAction === 'resolve' || selectedAction === 'reject';
+            decisionField.required = needsReason;
+            decisionField.setAttribute('aria-required', needsReason ? 'true' : 'false');
+        }
+
+        actionButtons.forEach(function (button) {
+            button.addEventListener('click', function () {
+                syncDecisionRequired(button.value);
+            });
+        });
+
+        syncDecisionRequired(document.activeElement && document.activeElement.value || '');
+    });
+</script>
+{% endblock %}

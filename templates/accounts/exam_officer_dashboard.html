@@ -1,0 +1,191 @@
+{% extends "accounts/base.html" %}
+{% block title %}Examination Officer Dashboard{% endblock %}
+{% block page_title %}Examination Office{% endblock %}
+{% block content %}
+<style>
+    .exam-shell { color: #172033; }
+    .exam-hero {
+        background: linear-gradient(135deg, #eff6ff 0%, #ffffff 48%, #f8fafc 100%);
+        border: 1px solid #dfeafe;
+        border-radius: 22px;
+        padding: 26px 28px;
+    }
+    .exam-badge {
+        display: inline-block;
+        background: #dbeafe;
+        color: #1d4ed8;
+        font-size: 11px;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        padding: 7px 10px;
+        border-radius: 999px;
+        font-weight: 750;
+        margin-bottom: 12px;
+    }
+    .exam-hero h1 {
+        margin: 0 0 8px;
+        font-size: 32px;
+        letter-spacing: -.8px;
+    }
+    .exam-hero p {
+        margin: 0;
+        color: #475569;
+        line-height: 1.7;
+    }
+    .exam-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+        margin-top: 24px;
+    }
+    .exam-card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 20px;
+    }
+    .exam-card .icon {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        background: #eff6ff;
+        color: #1d4ed8;
+        border-radius: 12px;
+        margin-bottom: 16px;
+    }
+    .exam-card h3 {
+        margin: 0 0 10px;
+        font-size: 15px;
+    }
+    .exam-card .stat {
+        font-size: 31px;
+        font-weight: 800;
+        margin: 0;
+        letter-spacing: -.06em;
+    }
+    .exam-card p {
+        margin: 6px 0 0;
+        color: #64748b;
+        font-size: 12px;
+        line-height: 1.7;
+    }
+    .exam-actions {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        margin-top: 24px;
+    }
+    .action-card {
+        display: block;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 20px;
+        text-decoration: none;
+        color: inherit;
+    }
+    .action-card .icon {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        background: #eff6ff;
+        color: #1d4ed8;
+        border-radius: 12px;
+        margin-bottom: 14px;
+    }
+    .action-card h3 {
+        margin: 0 0 8px;
+        font-size: 16px;
+    }
+    .action-card p {
+        margin: 0;
+        color: #64748b;
+        font-size: 12px;
+        line-height: 1.7;
+    }
+    .exam-notice {
+        margin-top: 22px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 18px 20px;
+        color: #475569;
+        line-height: 1.7;
+        font-size: 13px;
+    }
+    @media (max-width: 900px) {
+        .exam-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .exam-actions { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 700px) {
+        .exam-grid { grid-template-columns: 1fr; }
+        .exam-hero { padding: 22px 20px; }
+        .exam-hero h1 { font-size: 26px; }
+    }
+</style>
+
+<div class="exam-shell">
+    <div class="exam-hero">
+        <div class="exam-badge">Examination office</div>
+        <h1>Welcome back, {{ request.user.first_name|default:request.user.username }}</h1>
+        <p>Review submissions, validate course results, and make sure all academic outcomes comply with department policy before final approval.</p>
+    </div>
+
+    <div class="exam-grid">
+        <div class="exam-card">
+            <div class="icon"><i class="fa-solid fa-clipboard-list"></i></div>
+            <h3>Pending verification</h3>
+            <p class="stat">{{ pending_results|default:0 }}</p>
+            <p>Results awaiting review</p>
+        </div>
+
+        <div class="exam-card">
+            <div class="icon"><i class="fa-solid fa-circle-check"></i></div>
+            <h3>Verified</h3>
+            <p class="stat">{{ verified_results|default:0 }}</p>
+            <p>Forwarded to the HOD</p>
+        </div>
+
+        <div class="exam-card">
+            <div class="icon"><i class="fa-solid fa-check-double"></i></div>
+            <h3>Approved</h3>
+            <p class="stat">{{ approved_results|default:0 }}</p>
+            <p>Result sets approved</p>
+        </div>
+
+        <div class="exam-card">
+            <div class="icon"><i class="fa-solid fa-xmark-circle"></i></div>
+            <h3>Rejected</h3>
+            <p class="stat">{{ rejected_results|default:0 }}</p>
+            <p>Needs correction</p>
+        </div>
+    </div>
+
+    <div class="section-heading">Operational actions</div>
+    <div class="exam-actions">
+        <a href="{% url 'review_results' %}?status=pending" class="action-card">
+            <div class="icon"><i class="fa-solid fa-clipboard-list"></i></div>
+            <h3>Pending verification</h3>
+            <p>Review lecturer submissions and verify valid results before they proceed.</p>
+        </a>
+
+        <a href="{% url 'review_results' %}?status=verified" class="action-card">
+            <div class="icon"><i class="fa-solid fa-circle-check"></i></div>
+            <h3>Verified / forwarded</h3>
+            <p>Track results already verified and sent to the Head of Department.</p>
+        </a>
+
+        <a href="{% url 'complaint_queue' %}" class="action-card">
+            <div class="icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <h3>Complaint queue</h3>
+            <p>{{ complaints_count|default:0 }} complaint{{ complaints_count|pluralize }} assigned for review.</p>
+        </a>
+    </div>
+
+    <div class="exam-notice">
+        Lecturer submissions are verified by the examination officer, then forwarded to the HOD for final approval and publication. Rejections must include a valid reason and are logged for correction.
+    </div>
+</div>
+{% endblock %}

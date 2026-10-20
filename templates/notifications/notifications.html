@@ -1,0 +1,56 @@
+{% extends "accounts/base.html" %}
+{% block title %}Notifications{% endblock %}
+{% block page_title %}Notifications{% endblock %}
+{% block content %}
+<div class="page-shell">
+    <div class="page-header">
+        <div>
+            <span class="page-kicker">Inbox</span>
+            <h2>Notifications</h2>
+        </div>
+        <span class="secondary-btn">{{ unread_count }} unread</span>
+    </div>
+
+    <div class="data-panel">
+        {% if notifications %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Message</th>
+                        <th>When</th>
+                        <th class="row-actions">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for n in notifications %}
+                        <tr>
+                            <td>
+                                {% if not n.is_read %}<strong>{% endif %}{{ n.title }}{% if not n.is_read %}</strong>{% endif %}
+                            </td>
+                            <td>{{ n.message }}</td>
+                            <td>{{ n.created_at|date:"M d, Y H:i" }}</td>
+                            <td class="row-actions">
+                                {% if n.link %}
+                                    <a class="secondary-btn small-btn" href="{% url 'notification_open' n.id %}">Open</a>
+                                {% endif %}
+                                {% if n.is_read %}
+                                    <span class="muted-text">Read</span>
+                                {% else %}
+                                    <form method="post" style="margin:0; display:inline-block;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="notification_id" value="{{ n.id }}">
+                                        <button class="secondary-btn small-btn" type="submit">Mark read</button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty-state" style="padding: 28px;">No notifications yet.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

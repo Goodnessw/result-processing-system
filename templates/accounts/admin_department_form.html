@@ -1,0 +1,17 @@
+{% extends "accounts/base.html" %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+{% block content %}
+<div class="form-shell">
+    <div class="form-card">
+        <h2>{{ page_title }}</h2>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <div class="form-actions">
+                <button type="submit" class="submit-btn">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
